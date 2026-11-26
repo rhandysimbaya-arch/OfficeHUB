@@ -1,0 +1,21 @@
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:Segoe UI,Roboto,Arial,sans-serif;background:#e9ecef;color:#222;-webkit-tap-highlight-color:transparent}
+.topbar{display:flex;align-items:center;gap:6px;padding:6px 8px;color:#fff;position:sticky;top:0;z-index:20}
+.topbar .title{font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar button{background:rgba(255,255,255,.18);color:#fff;border:0;border-radius:6px;padding:7px 10px;font-size:13px}
+.tb{display:flex;gap:4px;padding:5px 6px;background:#f8f9fa;border-bottom:1px solid #ccc;overflow-x:auto;white-space:nowrap;position:sticky;top:44px;z-index:19;align-items:center}
+.tb button,.tb select,.tb input[type=color]{height:32px;min-width:32px;border:1px solid #c8ccd0;background:#fff;border-radius:5px;font-size:13px;padding:0 7px;flex:0 0 auto}
+.tb button:active{background:#dde}
+.tb .sep{width:1px;height:24px;background:#ccc;flex:0 0 auto;margin:0 3px}
+.tb input[type=color]{padding:1px;width:34px}
+.menu{position:absolute;right:6px;top:42px;background:#fff;color:#222;border-radius:8px;box-shadow:0 4px 18px rgba(0,0,0,.3);z-index:50;min-width:190px;display:none}
+.menu div{padding:12px 16px;border-bottom:1px solid #eee;font-size:14px}
+.menu div:last-child{border:0}
+.menu div:active{background:#e8eefc}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:100}
+.modal .box{background:#fff;border-radius:10px;padding:14px;width:92%;max-width:520px;max-height:88%;overflow:auto}
+.modal h3{margin:0 0 8px}
+.modal textarea,.modal input[type=text],.modal input[type=number]{width:100%;font-size:14px;padding:7px;border:1px solid #bbb;border-radius:6px}
+.modal .row{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+.modal .row button{padding:8px 14px;border-radius:6px;border:0;background:#2b579a;color:#fff;font-size:14px}
+.modal .row button.sec{background:#ddd;color:#222}
