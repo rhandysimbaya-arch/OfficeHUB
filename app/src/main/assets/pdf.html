@@ -24,8 +24,9 @@ input[type=text],select{width:100%;padding:9px;border:1px solid #c8ccd0;border-r
   <button id="t-word" onclick="setMode('word')">PDF &rarr; Word</button>
   <button id="t-excel" onclick="setMode('excel')">PDF &rarr; Excel</button>
   <button id="t-ppt" onclick="setMode('ppt')">PDF &rarr; PowerPoint</button>
+  <button id="t-img" onclick="setMode('img')">Office &rarr; Image</button>
  </div>
- <div class="card">
+ <div class="card" id="pdfcard">
   <button class="btn" id="pick" style="background:#555" onclick="pickPdf()">Choose PDF file</button>
   <div id="fname" class="note">No file chosen</div>
   <label>Pages (blank = all, e.g. 1-3,5)</label><input type="text" id="range" placeholder="all pages">
@@ -33,6 +34,15 @@ input[type=text],select{width:100%;padding:9px;border:1px solid #c8ccd0;border-r
   <div class="opt" id="o-ppt"><label>PowerPoint slides</label><select id="pp-mode"><option value="text">Editable text boxes (text only)</option><option value="image">Picture of each page (looks identical)</option></select></div>
   <button class="btn" id="go" onclick="convert()" disabled>Convert</button>
   <div class="prog" id="prog"><i id="bar"></i></div><div id="status"></div>
+ </div>
+<div class="card" id="imgcard" style="display:none">
+  <button class="btn" style="background:#0f766e" onclick="IMG.pick()">Choose Word / Excel / PowerPoint / PDF file</button>
+  <div id="im-fname" class="note">No file chosen</div>
+  <label>Image format</label><select id="im-fmt"><option value="png">PNG</option><option value="jpg">JPG</option></select>
+  <label>Quality</label><select id="im-scale"><option value="1">Normal (1x)</option><option value="2">High (2x)</option></select>
+  <div id="im-status" class="note"></div>
+  <div id="im-actions" style="display:none"><button class="btn" style="background:#0f766e" onclick="IMG.saveAll()">Save all (ZIP if several)</button></div>
+  <div id="im-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px"></div>
  </div>
  <div class="card" id="result" style="display:none">
   <b id="rtitle">Done</b><div class="note" id="rinfo"></div>
@@ -43,5 +53,5 @@ input[type=text],select{width:100%;padding:9px;border:1px solid #c8ccd0;border-r
 </div>
 <script src="libs/jszip.min.js"></script><script src="libs/xlsx.full.min.js"></script><script src="libs/pptxgen.bundle.js"></script>
 <script src="libs/pdf.worker.min.js"></script><script src="libs/pdf.min.js"></script>
-<script src="common.js"></script><script src="docxlib.js"></script><script src="pdfconv.js"></script>
+<script src="libs/mammoth.browser.min.js"></script><script src="common.js"></script><script src="docxlib.js"></script><script src="officeimg.js"></script><script src="pdfconv.js"></script>
 </body></html>

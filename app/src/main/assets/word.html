@@ -1,0 +1,146 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Word - Office HUB</title><link rel="stylesheet" href="common.css">
+<style>
+html,body{overflow:hidden}body{display:flex;flex-direction:column;height:100%}
+.topbar{background:#2b579a;position:static}
+.tabsrow{display:flex;background:#244a82;overflow-x:auto;flex:0 0 auto}
+.tabsrow div{padding:8px 14px;color:#cfdcf3;font-size:13px;white-space:nowrap}
+.tabsrow div.on{background:#f3f3f3;color:#2b579a;font-weight:600}
+.rib{background:#f3f3f3;border-bottom:1px solid #ccc;flex:0 0 auto}
+.rib .tb{position:static;display:none;border:0;background:transparent;padding:4px 6px}
+.rib .tb.on{display:flex}
+.rib .tb.two{flex-wrap:wrap;overflow:visible}
+@media (orientation:portrait){.rib .tb[data-t=Home]{flex-wrap:wrap;overflow:visible}}
+#desk{flex:1;overflow:auto;background:#cfd4da;padding:8px 0;-webkit-overflow-scrolling:touch}
+#paper{background:#fff;margin:0 auto;box-shadow:0 2px 8px rgba(0,0,0,.35);padding:0;width:816px;transform-origin:top left;position:relative}
+.hf{padding:0 96px;min-height:48px;color:#555;font-size:12px;outline:none}
+#hdr{padding-top:36px;border-bottom:1px dashed #bbb;margin-bottom:8px}
+#ftr{padding-bottom:30px;border-top:1px dashed #bbb;margin-top:8px}
+body.noh #hdr,body.noh #ftr{border-color:transparent}
+#body{padding:24px 96px;min-height:760px;outline:none;font:11pt Calibri,Arial,sans-serif;line-height:1.35;word-wrap:break-word}
+#body table{border-collapse:collapse;width:100%}#body td{border:1px solid #999;padding:4px;min-width:30px}
+#body h1{font-size:20pt;margin:12pt 0 4pt}#body h2{font-size:16pt;margin:10pt 0 4pt}#body h3{font-size:13pt;margin:8pt 0 3pt}
+#body img{max-width:100%}
+.pb{border-top:2px dashed #88a;margin:14px 0;text-align:center;font-size:10px;color:#88a;user-select:none}
+.fld{background:#e8eefc;border-radius:3px;padding:0 3px;color:#2b579a}
+body.hfedit #hdr,body.hfedit #ftr{background:#f4f8ff;outline:2px solid #2b579a}
+body.hfedit #body{opacity:.45;pointer-events:none}
+body.fitw #paper{width:auto!important;margin:0 6px}body.fitw .hf,body.fitw #body{padding-left:14px;padding-right:14px}body.fitw #hdr{padding-top:14px}body.fitw #ftr{padding-bottom:14px}
+#status{flex:0 0 auto;background:#2b579a;color:#fff;font-size:12px;padding:3px 8px;display:flex;justify-content:space-between}
+.tb button.act{background:#cfdcf3}
+</style></head><body>
+<div class="topbar"><button onclick="RB.home()">&#9664;</button><span class="title" id="ttl">Document1 - Word</span><button onclick="openDoc()">Open</button><button onclick="saveDocx()">Save</button><button onclick="document.getElementById('mn').style.display=document.getElementById('mn').style.display==='block'?'none':'block'">&#8942;</button></div>
+<div class="menu" id="mn" onclick="this.style.display='none'"><div onclick="saveDocx()">Save as .docx</div><div onclick="saveHtml()">Save as .html</div><div onclick="exportPdfConv()">Convert to image / PDF...</div><div onclick="newDoc()">New document</div></div>
+<div class="tabsrow" id="rtabs"></div>
+<div class="rib" id="rib">
+<div class="tb on" data-t="Home">
+ <button onclick="ex('undo')">&#8630;</button><button onclick="ex('redo')">&#8631;</button><span class="sep"></span>
+ <select id="sty" onchange="para(this.value)"><option value="p">Normal</option><option value="h1">Heading 1</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option></select>
+ <select id="fn" onchange="ex('fontName',this.value)"><option>Calibri</option><option>Arial</option><option>Times New Roman</option><option>Courier New</option><option>Verdana</option><option>Georgia</option></select>
+ <select id="fs" onchange="fsz(this.value)"><option>8</option><option>9</option><option>10</option><option selected>11</option><option>12</option><option>14</option><option>16</option><option>18</option><option>20</option><option>24</option><option>28</option><option>36</option></select>
+ <button onclick="ex('bold')"><b>B</b></button><button onclick="ex('italic')"><i>I</i></button><button onclick="ex('underline')"><u>U</u></button><button onclick="ex('strikeThrough')"><s>S</s></button><button onclick="ex('subscript')">x&#8322;</button><button onclick="ex('superscript')">x&sup2;</button>
+ <input type="color" value="#ff0000" onchange="ex('foreColor',this.value)" title="Font color"><input type="color" value="#ffff00" onchange="ex('hiliteColor',this.value)" title="Highlight">
+ <button onclick="ex('justifyLeft')">&#8676;</button><button onclick="ex('justifyCenter')">&#8596;</button><button onclick="ex('justifyRight')">&#8677;</button><button onclick="ex('justifyFull')">&#9776;</button>
+ <button onclick="ex('insertUnorderedList')">&bull;&#8801;</button><button onclick="ex('insertOrderedList')">1.&#8801;</button><button onclick="ex('outdent')">&#8676;&#8801;</button><button onclick="ex('indent')">&#8677;&#8801;</button><button onclick="ex('removeFormat')">Clear</button><button onclick="findRep()">Find</button>
+</div>
+<div class="tb" data-t="Insert">
+ <button onclick="insTable()">Table</button><button onclick="insImg()">Picture</button><button onclick="pageBreak()">Page break</button><button onclick="ex('insertHorizontalRule')">Line</button><button onclick="insLink()">Link</button><button onclick="insDate()">Date</button><button onclick="insSym()">Symbol</button>
+ <button onclick="tblOp('addRow')">+Row</button><button onclick="tblOp('addCol')">+Col</button><button onclick="tblOp('delRow')">-Row</button><button onclick="tblOp('delCol')">-Col</button>
+</div>
+<div class="tb" data-t="Layout">
+ <select id="psz" onchange="pageSize(this.value)"><option value="letter">Letter 8.5x11</option><option value="a4">A4</option><option value="legal">Legal</option></select>
+ <select id="lh" onchange="lineH(this.value)"><option value="1.0">Spacing 1.0</option><option value="1.15">1.15</option><option value="1.35" selected>1.35</option><option value="1.5">1.5</option><option value="2.0">2.0</option></select>
+ <button onclick="wc()">Word count</button>
+</div>
+<div class="tb" data-t="Header &amp; Footer">
+ <button id="hfBtn" onclick="hfToggle()">Edit Header/Footer</button><button onclick="hfIns('PAGE')">Page #</button><button onclick="hfIns('NUMPAGES')">Total pages</button><button onclick="hfDate()">Date</button>
+ <button onclick="hfAlign('justifyLeft')">&#8676;</button><button onclick="hfAlign('justifyCenter')">&#8596;</button><button onclick="hfAlign('justifyRight')">&#8677;</button><button onclick="hfClear()">Remove</button>
+</div>
+</div>
+<div id="desk"><div id="paper"><div id="hdr" class="hf" contenteditable="true" data-ph="Header"></div><div id="body" contenteditable="true" spellcheck="true"><p><br></p></div><div id="ftr" class="hf" contenteditable="true" data-ph="Footer"></div></div></div>
+<div id="status"><span id="stL">Page 1</span><span id="stR">0 words</span></div>
+<div class="modal" id="mG"><div class="box"><h3 id="gT"></h3><div id="gB"></div><div class="row" id="gR"></div></div></div>
+<script src="libs/jszip.min.js"></script><script src="libs/mammoth.browser.min.js"></script><script src="common.js"></script><script src="docxlib.js"></script>
+<script>
+const $=id=>document.getElementById(id);let name='Document1',pg={w:12240,h:15840},lastSel=null;
+document.execCommand('styleWithCSS',false,true);
+/* tabs */
+const TABS=['Home','Insert','Layout','Header & Footer'];
+$('rtabs').innerHTML=TABS.map((t,i)=>`<div class="${i?'':'on'}" onclick="tab('${t}',this)">${t}</div>`).join('');
+function tab(t,el){document.querySelectorAll('#rtabs div').forEach(d=>d.classList.remove('on'));el.classList.add('on');document.querySelectorAll('.rib .tb').forEach(b=>b.classList.toggle('on',b.dataset.t.replace('&amp;','&')===t));if(t==='Header & Footer'){hfSet(true)}else hfSet(false);}
+/* keep selection when pressing ribbon buttons */
+document.querySelectorAll('.rib button').forEach(b=>b.addEventListener('mousedown',e=>e.preventDefault()));
+document.addEventListener('selectionchange',()=>{const s=getSelection();if(s.rangeCount&&($('body').contains(s.anchorNode)||$('hdr').contains(s.anchorNode)||$('ftr').contains(s.anchorNode)))lastSel=s.getRangeAt(0).cloneRange();});
+function restore(){if(lastSel){const s=getSelection();s.removeAllRanges();s.addRange(lastSel);}}
+function ex(c,v){restore();document.execCommand(c,false,v||null);upd();}
+function para(t){restore();document.execCommand('formatBlock',false,t==='p'?'<p>':'<'+t+'>');upd();}
+function fsz(px){restore();document.execCommand('fontSize',false,7);document.querySelectorAll('font[size="7"],span[style*="xxx-large"]').forEach(f=>{const sp=document.createElement('span');sp.style.fontSize=px+'pt';while(f.firstChild)sp.appendChild(f.firstChild);f.replaceWith(sp);});upd();}
+function upd(){const t=($('body').innerText||'').trim();$('stR').textContent=(t?t.split(/\s+/).length:0)+' words';save();}
+$('body').addEventListener('input',upd);
+/* fit paper to screen */
+function fit(){const dw=$('desk').clientWidth;const narrow=dw<700;document.body.classList.toggle('fitw',narrow);if(narrow){$('paper').style.width='';$('paper').style.zoom=1;}else{$('paper').style.width=Math.round(pg.w/15)+'px';$('paper').style.zoom=Math.min(1,(dw-12)/$('paper').offsetWidth);}}
+window.addEventListener('resize',fit);
+/* insert */
+function insTable(){gen('Insert table','<label>Rows</label><input type="number" id="tr" value="3"><label>Columns</label><input type="number" id="tc" value="3">',[['Insert',()=>{const r=+$('tr').value,c=+$('tc').value;let h='<table>';for(let i=0;i<r;i++){h+='<tr>'+'<td><br></td>'.repeat(c)+'</tr>';}h+='</table><p><br></p>';closeG();restore();document.execCommand('insertHTML',false,h);upd();}]]);}
+function cellOf(){const s=getSelection();let n=s.anchorNode;while(n&&n.nodeName!=='TD'&&n.nodeName!=='TH')n=n.parentNode;return n;}
+function tblOp(op){restore();const td=cellOf();if(!td){alert('Place the cursor in a table cell first.');return;}const tr=td.parentNode,tb=tr.parentNode.closest('table'),ci=[...tr.children].indexOf(td);
+  if(op==='addRow'){const n=tr.cloneNode(true);n.querySelectorAll('td').forEach(x=>x.innerHTML='<br>');tr.after(n);}else if(op==='delRow'){if(tb.rows.length<2)tb.remove();else tr.remove();}else if(op==='addCol'){[...tb.rows].forEach(r=>{const c=document.createElement('td');c.innerHTML='<br>';r.cells[ci].after(c);});}else if(op==='delCol'){[...tb.rows].forEach(r=>r.cells[ci]&&r.cells[ci].remove());}upd();}
+function insImg(){RB.pickFile('image/*',(n,buf)=>{const fr=new FileReader();fr.onload=()=>{restore();document.execCommand('insertImage',false,fr.result);upd();};fr.readAsDataURL(new Blob([buf]));});}
+function pageBreak(){restore();document.execCommand('insertHTML',false,'<div class="pb" contenteditable="false">&mdash; page break &mdash;</div><p><br></p>');upd();}
+function insLink(){gen('Link','<label>Address</label><input type="text" id="lk" value="https://">',[['OK',()=>{const u=$('lk').value;closeG();ex('createLink',u);}]]);}
+function insDate(){restore();document.execCommand('insertText',false,new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'}));upd();}
+function insSym(){const s='&#169; &#174; &#8482; &#176; &#177; &#215; &#247; &#8364; &#8369; &#163; &#8211; &#8212; &#8226; &#8594; &#10003; &#945; &#946; &#960;'.split(' ');gen('Symbol','<div style="display:flex;flex-wrap:wrap;gap:6px">'+s.map(x=>`<button style="font-size:20px;padding:6px 12px" onclick="closeG();restore();document.execCommand('insertHTML',false,'${x}')">${x}</button>`).join('')+'</div>',[]);}
+function findRep(){gen('Find & Replace','<label>Find</label><input type="text" id="ff"><label>Replace with</label><input type="text" id="fr">',[['Replace all',()=>{const f=$('ff').value,r=$('fr').value;if(!f)return;const w=document.createTreeWalker($('body'),NodeFilter.SHOW_TEXT);let n,c=0;const L=[];while(n=w.nextNode())L.push(n);L.forEach(t=>{if(t.nodeValue.includes(f)){c+=t.nodeValue.split(f).length-1;t.nodeValue=t.nodeValue.split(f).join(r);}});closeG();upd();alert(c+' replacement(s).');}]]);}
+function wc(){const t=$('body').innerText||'';alert('Words: '+(t.trim()?t.trim().split(/\s+/).length:0)+'\nCharacters: '+t.length);}
+/* layout */
+function pageSize(v){pg=v==='a4'?{w:11906,h:16838}:v==='legal'?{w:12240,h:20160}:{w:12240,h:15840};$('body').style.minHeight=Math.round(pg.h/15-250)+'px';fit();save();}
+function lineH(v){$('body').style.lineHeight=v;}
+/* header / footer */
+function hfSet(on){document.body.classList.toggle('hfedit',on);$('hfBtn').classList.toggle('act',on);if(on){$('hdr').focus();}}
+function hfToggle(){hfSet(!document.body.classList.contains('hfedit'));}
+function hfTarget(){return $('ftr').contains(getSelection().anchorNode)?$('ftr'):$('hdr').contains(getSelection().anchorNode)?$('hdr'):$('ftr');}
+function hfIns(f){restore();const t=hfTarget();if(!t.contains(getSelection().anchorNode)){t.focus();}document.execCommand('insertHTML',false,`<span class="fld" contenteditable="false" data-f="${f}">${f==='PAGE'?'#':'N'}</span>&nbsp;`);save();}
+function hfDate(){restore();document.execCommand('insertText',false,new Date().toLocaleDateString());save();}
+function hfAlign(c){restore();document.execCommand(c);save();}
+function hfClear(){$('hdr').innerHTML='';$('ftr').innerHTML='';save();}
+['hdr','ftr'].forEach(id=>$(id).addEventListener('input',save));
+/* dialog */
+function gen(t,h,b){$('gT').textContent=t;$('gB').innerHTML=h;const r=$('gR');r.innerHTML='';const c=document.createElement('button');c.className='sec';c.textContent='Close';c.onclick=closeG;r.appendChild(c);(b||[]).forEach(([x,f])=>{const e=document.createElement('button');e.textContent=x;e.onclick=f;r.appendChild(e);});$('mG').style.display='flex';}
+function closeG(){$('mG').style.display='none'}
+/* ---------- DOM -> docx blocks ---------- */
+function cssRun(el,inh){const r=Object.assign({},inh);const st=el.style||{};const tag=el.nodeName;
+  if(tag==='B'||tag==='STRONG'||st.fontWeight==='bold'||+st.fontWeight>=600)r.b=true;if(tag==='I'||tag==='EM'||st.fontStyle==='italic')r.i=true;if(tag==='U'||/underline/.test(st.textDecoration||st.textDecorationLine||''))r.u=true;
+  if(st.color){r.color=rgbHex(st.color)}if(st.fontSize){const m=/([\d.]+)(pt|px)/.exec(st.fontSize);if(m)r.sz=m[2]==='px'?Math.round(m[1]*0.75*2)/2:+m[1];}if(st.fontFamily)r.font=st.fontFamily.split(',')[0].replace(/["']/g,'').trim();return r;}
+function rgbHex(c){const m=/rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(c);if(m)return [m[1],m[2],m[3]].map(x=>(+x).toString(16).padStart(2,'0')).join('').toUpperCase();return c.replace('#','').toUpperCase();}
+function inlineRuns(node,inh,out){node.childNodes.forEach(n=>{if(n.nodeType===3){if(n.nodeValue)out.push(Object.assign({t:n.nodeValue.replace(/ /g,' ')},inh));}else if(n.nodeType===1){if(n.nodeName==='BR'){out.push({br:true});}else if(n.classList&&n.classList.contains('fld')){out.push(Object.assign({field:n.dataset.f},inh));}else if(['UL','OL','TABLE','IMG'].includes(n.nodeName)){}else inlineRuns(n,cssRun(n,inh),out);}});return out;}
+function toBlocks(root){const blocks=[];
+  const aln=el=>{const a=(el.style&&el.style.textAlign)||'';return ['left','center','right','justify'].includes(a)?a:undefined;};
+  const walk=el=>{el.childNodes.forEach(n=>{
+    if(n.nodeType===3){if(n.nodeValue.trim())blocks.push({type:'p',runs:[{t:n.nodeValue}]});return;}if(n.nodeType!==1)return;const tag=n.nodeName;
+    if(n.classList.contains('pb')){blocks.push({type:'pagebreak'});return;}
+    if(/^H[1-3]$/.test(tag)){blocks.push({type:'p',heading:+tag[1],align:aln(n),runs:inlineRuns(n,{},[])});return;}
+    if(tag==='UL'||tag==='OL'){n.querySelectorAll(':scope > li').forEach((li,i)=>{const runs=inlineRuns(li,{},[]);if(tag==='OL')runs.unshift({t:(i+1)+'. '});blocks.push({type:'p',bullet:tag==='UL',align:aln(li),runs});});return;}
+    if(tag==='TABLE'){const rows=[...n.rows].map(r=>[...r.cells].map(c=>{const b=toBlocks(c);return b.length?b:'';}));blocks.push({type:'table',rows});return;}
+    if(tag==='HR'){blocks.push({type:'p',runs:[{t:'________________________________________'}]});return;}
+    if(tag==='P'||tag==='DIV'||tag==='BLOCKQUOTE'||tag==='PRE'){if(n.querySelector(':scope > p, :scope > div, :scope > table, :scope > ul, :scope > ol, :scope > h1, :scope > h2, :scope > h3')&&tag!=='P'){walk(n);return;}blocks.push({type:'p',align:aln(n),runs:inlineRuns(n,cssRun(n,{}),[])});return;}
+    if(tag==='IMG'){return;}
+    blocks.push({type:'p',runs:inlineRuns(n,cssRun(n,{}),[])});});};
+  walk(root);if(!blocks.length)blocks.push({type:'p',runs:[]});return blocks;}
+function hfBlocks(el){const b=toBlocks(el);return b.some(x=>x.type==='table'||(x.runs&&x.runs.some(r=>r.field||(r.t&&r.t.trim()))))?b:null;}
+async function saveDocx(){const hb=hfBlocks($('hdr')),fb=hfBlocks($('ftr'));const blob=await Docx.build({blocks:toBlocks($('body')),header:hb,footer:fb,page:pg});RB.saveBlob(name+'.docx',blob,'application/vnd.openxmlformats-officedocument.wordprocessingml.document');}
+function saveHtml(){RB.saveBlob(name+'.html',new Blob(['<!DOCTYPE html><meta charset="utf-8"><body>'+$('body').innerHTML],{type:'text/html'}),'text/html');}
+/* ---------- open ---------- */
+async function openDoc(){RB.pickFile('.docx,.html,.htm,.txt',async(n,buf)=>{name=n.replace(/\.[^.]+$/,'');$('ttl').textContent=name+' - Word';
+  if(/\.docx$/i.test(n)){const r=await mammoth.convertToHtml({arrayBuffer:buf},{styleMap:["p[style-name='Title'] => h1:fresh"]});$('body').innerHTML=r.value||'<p><br></p>';
+    try{const z=await JSZip.loadAsync(buf);for(const [id,f] of [['hdr',/^word\/header\d*\.xml$/],['ftr',/^word\/footer\d*\.xml$/]]){const fn=Object.keys(z.files).find(k=>f.test(k));if(fn){const x=await z.file(fn).async('string');const paras=x.split('</w:p>').map(p=>{let t='';(p.match(/<w:t[^>]*>[^<]*<\/w:t>|instrText[^>]*>[^<]*</g)||[]).forEach(m=>{if(/PAGE/.test(m)&&/instrText/.test(m))t+='<span class="fld" contenteditable="false" data-f="PAGE">#</span>';else if(/NUMPAGES/.test(m)&&/instrText/.test(m))t+='<span class="fld" contenteditable="false" data-f="NUMPAGES">N</span>';else if(!/instrText/.test(m))t+=m.replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');});return t;}).filter(Boolean);$(id).innerHTML=paras.map(p=>'<div>'+p+'</div>').join('');}}}catch(e){}}
+  else if(/\.txt$/i.test(n)){$('body').innerHTML=new TextDecoder().decode(buf).split(/\n/).map(l=>'<p>'+l.replace(/</g,'&lt;')+'</p>').join('');}
+  else $('body').innerHTML=new TextDecoder().decode(buf);upd();});}
+function newDoc(){if(!confirm('Start a new document? Unsaved changes are lost.'))return;$('body').innerHTML='<p><br></p>';$('hdr').innerHTML='';$('ftr').innerHTML='';name='Document1';$('ttl').textContent='Document1 - Word';upd();}
+function exportPdfConv(){save();alert('Open PDF Converter > Office to Image, then choose this saved .docx.');}
+/* persistence */
+function save(){try{localStorage.setItem('hub_word_doc',JSON.stringify({b:$('body').innerHTML,h:$('hdr').innerHTML,f:$('ftr').innerHTML,pg,name}));}catch(e){}}
+function init(){try{const imp=localStorage.getItem('hub_import_word');if(imp){localStorage.removeItem('hub_import_word');$('body').innerHTML=imp;name='Converted';$('ttl').textContent='Converted - Word';}else{const o=JSON.parse(localStorage.getItem('hub_word_doc')||'null');if(o){$('body').innerHTML=o.b;$('hdr').innerHTML=o.h;$('ftr').innerHTML=o.f;pg=o.pg||pg;name=o.name||name;$('ttl').textContent=name+' - Word';}}}catch(e){}
+  fit();upd();}
+window.__back=()=>{if($('mG').style.display==='flex'){closeG();return}RB.home()};
+init();
+</script></body></html>

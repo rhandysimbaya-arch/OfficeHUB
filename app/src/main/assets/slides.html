@@ -1,0 +1,140 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>PowerPoint - Office HUB</title><link rel="stylesheet" href="common.css">
+<style>
+html,body{overflow:hidden}body{display:flex;flex-direction:column;height:100%}
+.topbar{background:#c43e1c;position:static}
+.tabsrow{display:flex;background:#a63316;overflow-x:auto;flex:0 0 auto}
+.tabsrow div{padding:8px 14px;color:#f5d3c9;font-size:13px;white-space:nowrap}
+.tabsrow div.on{background:#f3f3f3;color:#c43e1c;font-weight:600}
+.rib{background:#f3f3f3;border-bottom:1px solid #ccc;flex:0 0 auto}
+.rib .tb{position:static;display:none;border:0;background:transparent;padding:4px 6px}
+.rib .tb.on{display:flex}
+@media (orientation:portrait){.rib .tb[data-t=Home]{flex-wrap:wrap;overflow:visible}}
+#main{flex:1;display:flex;min-height:0;flex-direction:column}
+@media (orientation:landscape){#main{flex-direction:row}#thumbs{flex-direction:column!important;width:130px;height:auto!important;overflow-y:auto!important;overflow-x:hidden!important;order:-1;border-top:0!important;border-right:1px solid #bbb}}
+#stageWrap{flex:1;overflow:auto;background:#8a8f96;display:flex;align-items:flex-start;justify-content:center;padding:8px;min-height:0}
+#stageBox{position:relative;flex:0 0 auto}
+#stage{position:absolute;left:0;top:0;transform-origin:0 0;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.5);overflow:hidden}
+.it{position:absolute;box-sizing:border-box;user-select:none;-webkit-user-select:none;overflow:hidden;line-height:1.2}
+.it.sel{outline:3px solid #c43e1c;overflow:visible}
+.it .rz{display:none;position:absolute;right:-14px;bottom:-14px;width:28px;height:28px;background:#c43e1c;border-radius:50%;border:2px solid #fff}
+.it.sel .rz{display:block}
+.it[contenteditable=true]{user-select:text;-webkit-user-select:text;outline:3px dashed #2b579a;cursor:text}
+.it img{width:100%;height:100%;object-fit:fill;pointer-events:none;display:block}
+#thumbs{flex:0 0 auto;display:flex;gap:8px;padding:6px;background:#e4e4e4;overflow-x:auto;border-top:1px solid #bbb;height:92px}
+.th{flex:0 0 auto;position:relative;border:2px solid transparent;background:#fff;overflow:hidden}
+.th.on{border-color:#c43e1c}
+.th .n{position:absolute;left:2px;top:0;font-size:10px;color:#555;z-index:2;background:rgba(255,255,255,.7);padding:0 2px}
+.th .in{transform-origin:0 0;position:absolute;left:0;top:0;pointer-events:none}
+#status{flex:0 0 auto;background:#c43e1c;color:#fff;font-size:12px;padding:3px 8px;display:flex;justify-content:space-between}
+#pres{position:fixed;inset:0;background:#000;z-index:200;display:none;align-items:center;justify-content:center}
+#presS{position:absolute;transform-origin:0 0;background:#fff;overflow:hidden}
+.tb button.act{background:#f5d3c9}
+</style></head><body>
+<div class="topbar"><button onclick="RB.home()">&#9664;</button><span class="title" id="ttl">Presentation1 - PowerPoint</span><button onclick="openPptx()">Open</button><button onclick="savePptx()">Save</button><button onclick="present(0)">&#9654;</button></div>
+<div class="tabsrow" id="rtabs"></div>
+<div class="rib" id="rib">
+<div class="tb on" data-t="Home">
+ <button onclick="newSlide()">+ Slide</button><button onclick="dupSlide()">Duplicate</button><button onclick="delSlide()">Delete</button><span class="sep"></span>
+ <select id="fn" onchange="setP('font',this.value)"><option>Calibri</option><option>Arial</option><option>Times New Roman</option><option>Verdana</option><option>Georgia</option></select>
+ <select id="fs" onchange="setP('size',+this.value)"><option>12</option><option>14</option><option>16</option><option>18</option><option selected>20</option><option>24</option><option>28</option><option>32</option><option>40</option><option>48</option><option>60</option><option>72</option></select>
+ <button onclick="tgP('bold')"><b>B</b></button><button onclick="tgP('italic')"><i>I</i></button><button onclick="tgP('underline')"><u>U</u></button>
+ <input type="color" value="#000000" onchange="setP('color',this.value)" title="Font color"><input type="color" value="#ffff99" onchange="setP('fill',this.value)" title="Fill">
+ <button onclick="setP('align','left')">&#8676;</button><button onclick="setP('align','center')">&#8596;</button><button onclick="setP('align','right')">&#8677;</button>
+ <button onclick="editText()">Edit text</button><button onclick="front()">Front</button><button onclick="delItem()">Delete item</button>
+</div>
+<div class="tb" data-t="Insert">
+ <button onclick="addText()">Text box</button><button onclick="addShape('rect')">Rectangle</button><button onclick="addShape('ellipse')">Oval</button><button onclick="addShape('line')">Line</button><button onclick="addImg()">Picture</button><button onclick="addTitleLayout()">Title layout</button><button onclick="addBulletLayout()">Content layout</button>
+</div>
+<div class="tb" data-t="Design">
+ <input type="color" value="#ffffff" onchange="setBg(this.value)" title="Slide background"><button onclick="setBg('#ffffff')">White</button><button onclick="setBg('#1f2937')">Dark</button><button onclick="setBg('#fff4e5')">Warm</button><button onclick="setBg('#e8f1ff')">Blue</button>
+ <button onclick="bgAll()">Apply to all</button>
+</div>
+<div class="tb" data-t="Slide Show">
+ <button onclick="present(0)">From start</button><button onclick="present(cur)">From current</button>
+</div>
+</div>
+<div id="main"><div id="stageWrap"><div id="stageBox"><div id="stage"></div></div></div><div id="thumbs"></div></div>
+<div id="status"><span id="stL">Slide 1</span><span id="stR">Tap to select. Drag to move. Round handle resizes.</span></div>
+<div id="pres"><div id="presS"></div></div>
+<script src="libs/jszip.min.js"></script><script src="libs/pptxgen.bundle.js"></script><script src="common.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+let deck={w:960,h:540,slides:[]},cur=0,selId=null,name='Presentation1',scale=1,uid=1;
+const TABS=['Home','Insert','Design','Slide Show'];
+$('rtabs').innerHTML=TABS.map((t,i)=>`<div class="${i?'':'on'}" onclick="tab('${t}',this)">${t}</div>`).join('');
+function tab(t,el){document.querySelectorAll('#rtabs div').forEach(d=>d.classList.remove('on'));el.classList.add('on');document.querySelectorAll('.rib .tb').forEach(b=>b.classList.toggle('on',b.dataset.t===t));}
+const S=()=>deck.slides[cur];
+const nid=()=>'i'+(uid++)+Math.floor(Math.random()*1e4);
+function mkSlide(){return{bg:'#ffffff',items:[]}}
+function ensure(){deck.slides.forEach(s=>s.items.forEach(i=>{if(!i.id)i.id=nid();}));}
+/* ---------- rendering ---------- */
+function itemEl(it,live){const d=document.createElement('div');d.className='it';d.dataset.id=it.id;d.style.cssText=`left:${it.x}px;top:${it.y}px;width:${it.w}px;height:${it.h}px;`;
+  if(it.type==='text'){d.style.fontSize=(it.size||20)/0.75+'px';d.style.fontWeight=it.bold?700:400;d.style.fontStyle=it.italic?'italic':'normal';d.style.textDecoration=it.underline?'underline':'none';d.style.color=it.color||'#000';d.style.textAlign=it.align||'left';d.style.fontFamily=(it.font||'Calibri')+',Arial,sans-serif';if(it.fill)d.style.background=it.fill;d.style.whiteSpace=it.nowrap===false?'normal':'pre-wrap';d.style.padding='2px 4px';d.textContent=it.text;}
+  else if(it.type==='image'){d.innerHTML=`<img src="${it.src}">`;}
+  else if(it.type==='shape'){if(it.shape==='line'){d.style.borderTop=(it.sw||3)+'px solid '+(it.stroke||'#333');d.style.height='0';}else{d.style.background=it.fill||'#c43e1c';d.style.border=(it.sw||0)+'px solid '+(it.stroke||'#000');if(it.shape==='ellipse')d.style.borderRadius='50%';}}
+  if(live){if(it.id===selId)d.classList.add('sel');const rz=document.createElement('div');rz.className='rz';d.appendChild(rz);bind(d,it);}return d;}
+function bind(d,it){let pd=null,moved=false,t0=0;
+  d.addEventListener('pointerdown',e=>{if(d.isContentEditable)return;e.stopPropagation();const wasSel=selId===it.id;selId=it.id;moved=false;t0=Date.now();pd={x:e.clientX,y:e.clientY,ix:it.x,iy:it.y,iw:it.w,ih:it.h,rz:e.target.classList.contains('rz'),was:wasSel};d.setPointerCapture(e.pointerId);if(!wasSel){document.querySelectorAll('.it.sel').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');syncRibbon();}});
+  d.addEventListener('pointermove',e=>{if(!pd)return;const dx=(e.clientX-pd.x)/scale,dy=(e.clientY-pd.y)/scale;if(Math.abs(dx)+Math.abs(dy)>3)moved=true;if(!moved)return;if(pd.rz){it.w=Math.max(20,pd.iw+dx);it.h=Math.max(it.shape==='line'?0:16,pd.ih+dy);}else{it.x=pd.ix+dx;it.y=pd.iy+dy;}d.style.left=it.x+'px';d.style.top=it.y+'px';d.style.width=it.w+'px';if(it.shape!=='line')d.style.height=it.h+'px';});
+  d.addEventListener('pointerup',e=>{if(!pd)return;const was=pd.was;pd=null;if(moved){save();renderThumbs();}else if(was&&it.type==='text')editText();});}
+$('stageWrap').addEventListener('pointerdown',e=>{if(e.target.id==='stageWrap'||e.target.id==='stage'||e.target.id==='stageBox'){endEdit();selId=null;document.querySelectorAll('.it.sel').forEach(x=>x.classList.remove('sel'));}});
+function render(){const st=$('stage');st.style.width=deck.w+'px';st.style.height=deck.h+'px';st.style.background=S().bg;st.innerHTML='';S().items.forEach(it=>st.appendChild(itemEl(it,true)));fitStage();renderThumbs();$('stL').textContent=`Slide ${cur+1} of ${deck.slides.length}`;syncRibbon();}
+function fitStage(){const w=$('stageWrap');const aw=w.clientWidth-16,ah=w.clientHeight-16;scale=Math.min(aw/deck.w,ah/deck.h);$('stage').style.transform=`scale(${scale})`;const b=$('stageBox');b.style.width=deck.w*scale+'px';b.style.height=deck.h*scale+'px';}
+window.addEventListener('resize',()=>{fitStage();renderThumbs();});
+function renderThumbs(){const T=$('thumbs');T.innerHTML='';const land=matchMedia('(orientation:landscape)').matches;const tw=land?112:Math.round(72*deck.w/deck.h);const k=tw/deck.w;deck.slides.forEach((s,i)=>{const d=document.createElement('div');d.className='th'+(i===cur?' on':'');d.style.width=tw+'px';d.style.height=Math.round(deck.h*k)+'px';d.innerHTML=`<span class="n">${i+1}</span>`;const in_=document.createElement('div');in_.className='in';in_.style.cssText=`width:${deck.w}px;height:${deck.h}px;transform:scale(${k});background:${s.bg}`;s.items.forEach(it=>in_.appendChild(itemEl(it,false)));d.appendChild(in_);d.onclick=()=>{endEdit();cur=i;selId=null;render();};T.appendChild(d);});}
+/* ---------- editing ---------- */
+function sel(){return S().items.find(i=>i.id===selId)}
+function syncRibbon(){const it=sel();if(it&&it.type==='text'){$('fn').value=it.font||'Calibri';$('fs').value=it.size||20;}}
+function setP(k,v){const it=sel();if(!it){alert('Tap an item on the slide first.');return}endEdit();if(k==='fill'&&it.type==='shape'){it.fill=v;}else if(k==='color'&&it.type==='shape'){it.fill=v;}else it[k]=v;save();render();}
+function tgP(k){const it=sel();if(!it){alert('Tap a text item first.');return}endEdit();it[k]=!it[k];save();render();}
+function editText(){const it=sel();if(!it||it.type!=='text')return;const d=document.querySelector(`.it[data-id="${it.id}"]`);if(!d)return;d.contentEditable='true';d.textContent=it.text;d.focus();const r=document.createRange();r.selectNodeContents(d);getSelection().removeAllRanges();getSelection().addRange(r);d.onblur=()=>endEdit();}
+function endEdit(){const d=document.querySelector('.it[contenteditable=true]');if(!d)return;const it=S().items.find(i=>i.id===d.dataset.id);if(it)it.text=d.innerText.replace(/\n$/,'');d.contentEditable='false';d.onblur=null;save();render();}
+function addItem(it){endEdit();it.id=nid();S().items.push(it);selId=it.id;save();render();return it;}
+function addText(){addItem({type:'text',x:80,y:80,w:400,h:70,text:'Click to edit',size:24,color:'#000000',align:'left'});}
+function addShape(s){addItem(s==='line'?{type:'shape',shape:'line',x:100,y:200,w:300,h:0,stroke:'#333333',sw:4}:{type:'shape',shape:s,x:120,y:120,w:240,h:140,fill:'#c43e1c'});}
+function addImg(){RB.pickFile('image/*',(n,buf)=>{const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{let w=Math.min(500,im.width),h=w*im.height/im.width;addItem({type:'image',x:80,y:60,w,h,src:fr.result});};im.src=fr.result;};fr.readAsDataURL(new Blob([buf]));});}
+function addTitleLayout(){addItem({type:'text',x:80,y:150,w:800,h:110,text:'Presentation title',size:48,bold:true,align:'center',color:'#000000'});addItem({type:'text',x:160,y:290,w:640,h:60,text:'Subtitle',size:24,align:'center',color:'#555555'});}
+function addBulletLayout(){addItem({type:'text',x:60,y:30,w:840,h:80,text:'Slide title',size:36,bold:true,color:'#000000'});addItem({type:'text',x:60,y:130,w:840,h:340,text:'• First point\n• Second point\n• Third point',size:24,color:'#222222'});}
+function front(){const it=sel();if(!it)return;const a=S().items;a.splice(a.indexOf(it),1);a.push(it);save();render();}
+function delItem(){const it=sel();if(!it)return;const a=S().items;a.splice(a.indexOf(it),1);selId=null;save();render();}
+function newSlide(){endEdit();deck.slides.splice(cur+1,0,mkSlide());cur++;selId=null;save();render();}
+function dupSlide(){endEdit();const c=JSON.parse(JSON.stringify(S()));c.items.forEach(i=>i.id=nid());deck.slides.splice(cur+1,0,c);cur++;save();render();}
+function delSlide(){if(deck.slides.length<2){S().items=[];render();return}deck.slides.splice(cur,1);cur=Math.max(0,cur-1);selId=null;save();render();}
+function setBg(c){S().bg=c;save();render();}function bgAll(){deck.slides.forEach(s=>s.bg=S().bg);save();render();}
+/* ---------- present ---------- */
+let pi=0;function present(i){endEdit();pi=i;$('pres').style.display='flex';drawP();try{document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()}catch(e){}}
+function drawP(){const p=$('presS');p.style.width=deck.w+'px';p.style.height=deck.h+'px';const k=Math.min(innerWidth/deck.w,innerHeight/deck.h);p.style.transform=`scale(${k})`;p.style.left=(innerWidth-deck.w*k)/2+'px';p.style.top=(innerHeight-deck.h*k)/2+'px';const s=deck.slides[pi];p.style.background=s.bg;p.innerHTML='';s.items.forEach(it=>p.appendChild(itemEl(it,false)));}
+$('pres').addEventListener('click',e=>{const x=e.clientX;if(x<innerWidth*0.3){pi=Math.max(0,pi-1);drawP();}else{if(pi>=deck.slides.length-1){endP();return}pi++;drawP();}});
+function endP(){$('pres').style.display='none';if(document.fullscreenElement)document.exitFullscreen();}
+window.addEventListener('keydown',e=>{if($('pres').style.display==='flex'){if(e.key==='Escape')endP();else if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){if(pi<deck.slides.length-1){pi++;drawP();}else endP();}else if(e.key==='ArrowLeft'||e.key==='PageUp'){pi=Math.max(0,pi-1);drawP();}}});
+/* ---------- pptx export ---------- */
+function savePptx(){endEdit();const p=new PptxGenJS();const W=deck.w/96,H=deck.h/96;p.defineLayout({name:'HUB',width:W,height:H});p.layout='HUB';
+  deck.slides.forEach(s=>{const sl=p.addSlide();sl.background={color:(s.bg||'#ffffff').replace('#','')};s.items.forEach(it=>{const o={x:it.x/96,y:it.y/96,w:Math.max(.05,it.w/96),h:Math.max(.05,it.h/96)};
+    if(it.type==='text'){sl.addText(it.text||'',Object.assign(o,{fontSize:it.size||20,bold:!!it.bold,italic:!!it.italic,underline:it.underline?{style:'sng'}:undefined,color:(it.color||'#000000').replace('#',''),align:it.align||'left',valign:'top',fontFace:it.font||'Calibri',margin:3,fit:'none'},it.fill?{fill:{color:it.fill.replace('#','')}}:{}));}
+    else if(it.type==='image'){sl.addImage(Object.assign(o,{data:it.src}));}
+    else if(it.shape==='line'){sl.addShape(p.ShapeType.line,Object.assign(o,{h:0,line:{color:(it.stroke||'#333333').replace('#',''),width:it.sw||3}}));}
+    else sl.addShape(it.shape==='ellipse'?p.ShapeType.ellipse:p.ShapeType.rect,Object.assign(o,{fill:{color:(it.fill||'#c43e1c').replace('#','')},line:{color:(it.stroke||'#000000').replace('#',''),width:it.sw||0}}));});});
+  p.write({outputType:'blob'}).then(b=>RB.saveBlob(name+'.pptx',b,'application/vnd.openxmlformats-officedocument.presentationml.presentation'));}
+/* ---------- pptx import (text, pictures, simple shapes) ---------- */
+async function openPptx(){RB.pickFile('.pptx',async(n,buf)=>{try{const z=await JSZip.loadAsync(buf);const pres=await z.file('ppt/presentation.xml').async('string');const m=/<p:sldSz[^>]*cx="(\d+)"[^>]*cy="(\d+)"/.exec(pres)||[0,9144000,5143500];const E=960/ +m[1];const nd={w:960,h:Math.round(+m[2]*E),slides:[]};
+  const files=Object.keys(z.files).filter(f=>/^ppt\/slides\/slide\d+\.xml$/.test(f)).sort((a,b)=>+a.match(/\d+/)[0]-+b.match(/\d+/)[0]);
+  for(const f of files){const xml=await z.file(f).async('string');const doc=new DOMParser().parseFromString(xml,'application/xml');const relF='ppt/slides/_rels/'+f.split('/').pop()+'.rels';const rels={};if(z.file(relF)){const rx=await z.file(relF).async('string');[...rx.matchAll(/<Relationship [^>]*Id="([^"]+)"[^>]*Target="([^"]+)"/g)].forEach(r=>rels[r[1]]=r[2]);}
+    const s=mkSlide();const bgm=/<p:bg>[\s\S]*?srgbClr val="([0-9A-Fa-f]{6})"/.exec(xml);if(bgm)s.bg='#'+bgm[1];const g=(el,tag)=>el.getElementsByTagName(tag);
+    for(const el of [...g(doc,'p:sp'),...g(doc,'p:pic')]){const off=g(el,'a:off')[0],ext=g(el,'a:ext')[0];if(!off||!ext)continue;const it={id:nid(),x:Math.round(+off.getAttribute('x')*E),y:Math.round(+off.getAttribute('y')*E),w:Math.round(+ext.getAttribute('cx')*E),h:Math.round(+ext.getAttribute('cy')*E)};
+      if(el.nodeName==='p:pic'){const bl=g(el,'a:blip')[0];const rid=bl&&bl.getAttribute('r:embed');const t=rels[rid];if(t){const path=t.startsWith('/')?t.slice(1):'ppt/'+t.replace('../','');const fl=z.file(path);if(fl){const b64=await fl.async('base64');const ext2=path.split('.').pop().toLowerCase();it.type='image';it.src=`data:image/${ext2==='jpg'?'jpeg':ext2};base64,${b64}`;s.items.push(it);}}continue;}
+      const paras=[...g(el,'a:p')].map(p=>[...g(p,'a:t')].map(t=>t.textContent).join(''));const text=paras.join('\n');const rp=g(el,'a:rPr')[0];const sf=el.querySelector('spPr > a\\:solidFill > a\\:srgbClr, p\\:spPr > a\\:solidFill > a\\:srgbClr');
+      if(text.trim()){it.type='text';it.text=text;it.size=rp&&rp.getAttribute('sz')?+rp.getAttribute('sz')/100:20;it.bold=!!(rp&&rp.getAttribute('b')==='1');it.italic=!!(rp&&rp.getAttribute('i')==='1');const cl=rp&&rp.getElementsByTagName('a:srgbClr')[0];if(cl)it.color='#'+cl.getAttribute('val');const al=g(el,'a:pPr')[0];if(al){const a=al.getAttribute('algn');it.align=a==='ctr'?'center':a==='r'?'right':'left';}s.items.push(it);}
+      else if(sf){it.type='shape';const pgm=g(el,'a:prstGeom')[0];it.shape=pgm&&pgm.getAttribute('prst')==='ellipse'?'ellipse':'rect';it.fill='#'+sf.getAttribute('val');s.items.push(it);}}
+    nd.slides.push(s);}
+  if(!nd.slides.length)throw new Error('No slides found');deck=nd;cur=0;selId=null;name=n.replace(/\.[^.]+$/,'');$('ttl').textContent=name+' - PowerPoint';save();render();}catch(e){alert('Could not open: '+e.message);}});}
+/* ---------- persistence ---------- */
+function save(){try{localStorage.setItem('hub_slides_deck',JSON.stringify({deck,name}));}catch(e){alert('Storage full: save to .pptx to keep large pictures.');}}
+function init(){let imp=null;try{imp=localStorage.getItem('hub_import_slides');}catch(e){}
+  if(imp){try{localStorage.removeItem('hub_import_slides');deck=JSON.parse(imp);name='Converted';}catch(e){}}
+  else{try{const o=JSON.parse(localStorage.getItem('hub_slides_deck')||'null');if(o){deck=o.deck;name=o.name||name;}}catch(e){}}
+  if(!deck.slides.length){deck.slides.push(mkSlide());S().items.push({type:'text',x:80,y:150,w:800,h:110,text:'Click to add title',size:48,bold:true,align:'center',color:'#000000'},{type:'text',x:160,y:290,w:640,h:60,text:'Click to add subtitle',size:24,align:'center',color:'#555555'});}
+  ensure();$('ttl').textContent=name+' - PowerPoint';render();}
+window.__back=()=>{if($('pres').style.display==='flex'){endP();return}RB.home()};
+init();
+</script></body></html>

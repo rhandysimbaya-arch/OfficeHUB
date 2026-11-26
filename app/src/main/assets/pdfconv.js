@@ -1,15 +1,16 @@
 // PDF extraction + conversion to Word / Excel / PowerPoint
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'libs/pdf.worker.min.js';
-const COL = {word:'#2b579a', excel:'#217346', ppt:'#c43e1c'};
+const COL = {word:'#2b579a', excel:'#217346', ppt:'#c43e1c', img:'#0f766e'};
 let mode = 'word', pdfDoc = null, pdfName = 'document', outBlob = null, outName = '', handoff = null;
 const $ = id => document.getElementById(id);
 
 function setMode(m){
   mode = m;
-  ['word','excel','ppt'].forEach(k => { const b = $('t-'+k); b.classList.toggle('on', k===m); b.style.background = k===m ? COL[k] : '#fff'; });
-  $('top').style.background = COL[m]; $('go').style.background = COL[m]; $('dl').style.background = COL[m]; $('openapp').style.background = '#e5e7eb';
+  $('pdfcard').style.display = m==='img' ? 'none' : ''; $('imgcard').style.display = m==='img' ? '' : 'none';
+  ['word','excel','ppt','img'].forEach(k => { const b = $('t-'+k); b.classList.toggle('on', k===m); b.style.background = k===m ? COL[k] : '#fff'; });
+  $('top').style.background = COL[m]; $('go').style.background = COL[m==='img'?'word':m]; $('dl').style.background = COL[m]; $('openapp').style.background = '#e5e7eb';
   $('o-excel').classList.toggle('show', m==='excel'); $('o-ppt').classList.toggle('show', m==='ppt');
-  $('openapp').textContent = 'Open in ' + {word:'Word editor',excel:'Excel',ppt:'PowerPoint'}[m];
+  $('openapp').textContent = 'Open in ' + ({word:'Word editor',excel:'Excel',ppt:'PowerPoint'}[m]||'');
   $('result').style.display = 'none';
 }
 function pickPdf(){
