@@ -48,8 +48,26 @@ public class MainActivity extends Activity {
                 return true;
             }
             @Override
-            public boolean onJsConfirm(WebView v, String url, String msg, JsResult r) {
-                return super.onJsConfirm(v, url, msg, r);
+            public boolean onJsAlert(WebView v, String url, String msg, final JsResult r) {
+                new android.app.AlertDialog.Builder(MainActivity.this).setTitle("Office HUB").setMessage(msg)
+                    .setPositiveButton("OK", (d, w) -> r.confirm()).setOnCancelListener(d -> r.confirm()).show();
+                return true;
+            }
+            @Override
+            public boolean onJsConfirm(WebView v, String url, String msg, final JsResult r) {
+                new android.app.AlertDialog.Builder(MainActivity.this).setTitle("Office HUB").setMessage(msg)
+                    .setPositiveButton("OK", (d, w) -> r.confirm()).setNegativeButton("Cancel", (d, w) -> r.cancel())
+                    .setOnCancelListener(d -> r.cancel()).show();
+                return true;
+            }
+            @Override
+            public boolean onJsPrompt(WebView v, String url, String msg, String def, final JsPromptResult r) {
+                final android.widget.EditText et = new android.widget.EditText(MainActivity.this);
+                et.setText(def == null ? "" : def);
+                new android.app.AlertDialog.Builder(MainActivity.this).setTitle("Office HUB").setMessage(msg).setView(et)
+                    .setPositiveButton("OK", (d, w) -> r.confirm(et.getText().toString()))
+                    .setNegativeButton("Cancel", (d, w) -> r.cancel()).setOnCancelListener(d -> r.cancel()).show();
+                return true;
             }
         });
         web.loadUrl("file:///android_asset/index.html");
