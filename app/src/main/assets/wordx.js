@@ -56,7 +56,7 @@ const wv = id => $(id) ? ($(id).type === 'checkbox' ? $(id).checked : $(id).valu
 /* ---------------- CSS for new features ---------------- */
 (function () {
   const st = document.createElement('style'); st.id = 'wxcss'; st.textContent = `
-.wmenu{position:fixed;z-index:200;background:#fff;border:1px solid #c8c8c8;box-shadow:0 4px 14px rgba(0,0,0,.25);padding:4px 0;min-width:190px;max-height:80vh;overflow:auto;font-size:13px;border-radius:4px}
+.wmenu{position:fixed;z-index:1000;background:#fff;border:1px solid #c8c8c8;box-shadow:0 4px 14px rgba(0,0,0,.25);padding:4px 0;min-width:190px;max-height:80vh;overflow:auto;font-size:13px;border-radius:4px}
 .wmenu .wmi{display:flex;align-items:center;gap:8px;padding:7px 14px 7px 8px;cursor:pointer;white-space:nowrap}.wmenu .wmi:hover{background:#e5edf8}.wmenu .wmi.on{background:#d6e4f7}.wmenu .wmi.dis{color:#aaa}
 .wmenu .wic{width:20px;text-align:center}.wmenu .wk{margin-left:auto;color:#888;font-size:11px;padding-left:18px}.wmenu hr{border:0;border-top:1px solid #e3e3e3;margin:3px 0}.wmenu .whtml{padding:6px 10px}
 .wgal{display:grid;gap:6px}.wgal>div{border:1px solid #ddd;border-radius:3px;padding:6px;cursor:pointer;background:#fff;font-size:12px;text-align:center}.wgal>div:hover{border-color:#2b579a;background:#eef3fb}
@@ -642,3 +642,18 @@ async function wLoadFile(n, buf) {
 }
 function wFixNums() { WB().querySelectorAll('.fnref,.enref').forEach(r => { const box = WB().querySelector(`.notes p[data-id="${r.dataset.id}"]`); }); }
 function wMdToHtml(t) { const L = t.split(/\r?\n/); let h = '', list = null; const inl = s => wesc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\*(.+?)\*/g, '<i>$1</i>').replace(/`(.+?)`/g, '<code>$1</code>').replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2">$1</a>'); const close = () => { if (list) { h += `</${list}>`; list = null; } }; for (let i = 0; i < L.length; i++) { const l = L[i]; let m; if ((m = /^(#{1,4})\s+(.*)/.exec(l))) { close(); h += `<h${m[1].length}>${inl(m[2])}</h${m[1].length}>`; } else if ((m = /^\s*[-*]\s+(.*)/.exec(l))) { if (list !== 'ul') { close(); h += '<ul>'; list = 'ul'; } h += `<li>${inl(m[1])}</li>`; } else if ((m = /^\s*\d+\.\s+(.*)/.exec(l))) { if (list !== 'ol') { close(); h += '<ol>'; list = 'ol'; } h += `<li>${inl(m[1])}</li>`; } else if (/^\|.*\|$/.test(l) && /^\|[\s:|-]+\|$/.test(L[i + 1] || '')) { close(); const rows = [l]; i += 2; while (i < L.length && /^\|.*\|$/.test(L[i])) rows.push(L[i++]); i--; h += '<table class="wt-grid">' + rows.map(r => '<tr>' + r.slice(1, -1).split('|').map(c => `<td>${inl(c.trim())}</td>`).join('') + '</tr>').join('') + '</table>'; } else if (!l.trim()) close(); else { close(); h += `<p>${inl(l)}</p>`; } } close(); return h || '<p><br></p>'; }
+
+/* ---- long-press a picture / shape: floating editor (crop, resize, reposition, delete) ---- */
+function wPicEdit(el) {
+  wPicSel(el); const isImg = el.nodeName === 'IMG'; let snapped = false; const k = () => (el.getBoundingClientRect().width / (el.offsetWidth || 1)) || 1;
+  const o = { keep: isImg, canCrop: isImg,
+    onBox(b) { if (!snapped) { wSnap(); snapped = true; } const kk = k(); el.style.width = Math.max(20, b.w / kk) + 'px'; el.style.height = isImg ? 'auto' : Math.max(20, b.h / kk) + 'px'; if (b.final) { snapped = false; wAfter(); } },
+    onMove(dx, dy, fin, e0) { const kk = k(); el.style.translate = (dx / kk) + 'px ' + (dy / kk) + 'px'; if (!fin) return; el.style.translate = ''; const x = e0.clientX + dx, y = e0.clientY + dy; let r = document.caretRangeFromPoint ? document.caretRangeFromPoint(x, y) : null; if (r && WB().contains(r.startContainer) && !el.contains(r.startContainer) && (Math.abs(dx) + Math.abs(dy) > 8)) { wSnap(); r.insertNode(el); wFixCaret && 0; wAfter(); } },
+    async onCrop(c) { wSnap(); const w = el.getBoundingClientRect().width / k(); el.src = await PB.bake(el.src, c); el.style.width = Math.max(20, w * (1 - c.l - c.r)) + 'px'; el.style.height = 'auto'; wAfter(); },
+    onDelete() { wSnap(); el.remove(); wPicSel(null); wAfter(); },
+    extra: [{ t: 'Wrap', f: bar => wMenu(bar, [['', 'In line with text'], ['L', 'Float left'], ['R', 'Float right'], ['C', 'Centered']].map(([c, t]) => ({ t, f: () => wPicWrap(c) })))}, { t: 'More…', f: () => { PB.end(); wPicSel(el); wPicDlg(); } }] };
+  Object.defineProperty(o, 'el', { get: () => el }); PB.edit(o);
+}
+PB.longPress(WB(), 'img,.wshape', el => wPicEdit(el));
+
+window.__exit={keys:['hub_word_doc','hub_word_x'],save:()=>saveDocx(),empty:()=>!WB().innerText.trim()&&!WB().querySelector('img,table,.wshape')};

@@ -25,5 +25,18 @@ window.RB = {
     m.querySelector('#rbNo').onclick = ()=>{m.style.display='none'};
     m.querySelector('#rbOk').onclick = ()=>{m.style.display='none'; cb(inp.value)};
   },
-  home(){ location.href='index.html'; }
+  home(){
+    const X=window.__exit; if(!X||window.__discard){ location.href='index.html'; return; }
+    let empty=false; try{ empty=X.empty&&X.empty(); }catch(e){}
+    if(empty){ X.keys.forEach(k=>{try{localStorage.removeItem(k)}catch(e){}}); location.href='index.html'; return; }
+    let m=document.getElementById('rbExit'); if(m) m.remove();
+    m=document.createElement('div'); m.id='rbExit'; m.className='modal'; m.style.cssText='display:flex;z-index:2000';
+    m.innerHTML='<div class="box"><h3>Save this file?</h3><div style="margin:6px 0 12px;font-size:13px;opacity:.85">Do you want to save before closing? If you don\'t save, the next time you open it you will start with a blank file.</div><div class="row" style="flex-wrap:wrap;gap:8px"><button class="sec" id="rbxC">Cancel</button><button class="sec" id="rbxN">Don\'t save</button><button id="rbxS">Save</button></div></div>';
+    document.body.appendChild(m);
+    m.querySelector('#rbxC').onclick=()=>m.remove();
+    m.querySelector('#rbxN').onclick=()=>{ window.__discard=true; X.keys.forEach(k=>{try{localStorage.removeItem(k)}catch(e){}}); location.href='index.html'; };
+    m.querySelector('#rbxS').onclick=async()=>{ m.remove(); try{ await X.save(); }catch(e){} setTimeout(()=>{location.href='index.html'},400); };
+  }
 };
+
+(function(){const o=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(window.__discard&&window.__exit&&window.__exit.keys.indexOf(k)>=0)return;return o.apply(this,arguments)}})();

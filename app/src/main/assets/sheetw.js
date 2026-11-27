@@ -155,3 +155,18 @@ window.addEventListener('keydown', e => { if (editing || editCell) return; if (e
   add('Page Layout', grp('Page Setup', [['Page Setup', 'pageDlg()', '&#128209;'], ['Print Area', 'setPrintArea()', '&#9635;'], ['Clear Area', 'setPrintArea(true)', '&#10006;'], ['Print', 'printSheet()', '&#128424;']]));
   add('Data', grp('Outline', [['Group', 'groupAuto()', '&#10133;'], ['Ungroup', 'ungroupAuto()', '&#10134;'], ['Hide Detail', "showDetail(sel.c1===1&&sel.c2>=COLS||!(sel.r1===1&&sel.r2>=ROWS)?'r':'c',false)", '&#9660;'], ['Show Detail', "showDetail(sel.c1===1&&sel.c2>=COLS||!(sel.r1===1&&sel.r2>=ROWS)?'r':'c',true)", '&#9650;'], ['Subtotal', 'subtotalDlg()', '&#931;']]));
 })();
+
+/* ---- long-press a picture / chart / button: floating editor (crop, resize, reposition, delete) ---- */
+PB.longPress(document.getElementById('shapes'), '.shp', (d) => {
+  const s = shapes().find(x => x.id === d.dataset.id); if (!s) return; selShape = s.id;
+  const k = (d.getBoundingClientRect().width / (s.w || 1)) || 1; let p0 = null;
+  const o = { keep: s.type === 'image', canCrop: s.type === 'image',
+    onMove(dx, dy, fin) { if (!p0) p0 = { x: s.x, y: s.y }; s.x = Math.max(0, p0.x + dx / k); s.y = Math.max(0, p0.y + dy / k); o.el.style.left = s.x + 'px'; o.el.style.top = s.y + 'px'; if (fin) { p0 = null; save(); } },
+    onBox(b) { if (!p0) p0 = { x: s.x, y: s.y }; s.x = Math.max(0, p0.x + b.dx / k); s.y = Math.max(0, p0.y + b.dy / k); s.w = Math.max(20, b.w / k); s.h = Math.max(16, b.h / k); const e = o.el; e.style.left = s.x + 'px'; e.style.top = s.y + 'px'; e.style.width = s.w + 'px'; e.style.height = s.h + 'px'; if (b.final) { p0 = null; save(); if (s.type === 'chart') renderShapes(); } },
+    async onCrop(c) { s.src = await PB.bake(s.src, c); s.x += s.w * c.l; s.y += s.h * c.t; s.w *= (1 - c.l - c.r); s.h *= (1 - c.t - c.b); save(); renderShapes(); },
+    onDelete() { const a = shapes(); const i = a.findIndex(x => x.id === s.id); if (i >= 0) a.splice(i, 1); selShape = null; save(); renderShapes(); } };
+  Object.defineProperty(o, 'el', { get: () => document.querySelector('#shapes .shp[data-id="' + s.id + '"]') || d });
+  PB.edit(o);
+});
+
+window.__exit={keys:['hub_sheet_book'],save:()=>saveX(),empty:()=>{try{return Object.keys(wb.sheets).every(n=>!Object.keys(wb.sheets[n].cells).length)&&!Object.values(book.shapes||{}).some(a=>a&&a.length)}catch(e){return false}}};
