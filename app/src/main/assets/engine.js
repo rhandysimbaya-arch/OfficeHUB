@@ -136,7 +136,7 @@
   // ---------- Workbook ----------
   class Workbook {
     constructor() { this.sheets = {}; this.order = []; this.addSheet('Sheet1'); this.spill = {}; this.spillPrev = {}; this.now = new Date(); }
-    addSheet(name) { if (!this.sheets[name]) { this.sheets[name] = { name, cells: {}, vals: {}, fmt: {}, style: {}, colW: {}, rowH: {} }; this.order.push(name); } return this.sheets[name]; }
+    addSheet(name) { if (!this.sheets[name]) { this.sheets[name] = { name, cells: {}, vals: {}, fmt: {}, style: {}, colW: {}, rowH: {}, merges: [] }; this.order.push(name); } return this.sheets[name]; }
     removeSheet(name) { delete this.sheets[name]; this.order = this.order.filter(n => n !== name); }
     key(r, c) { return r + ',' + c; }
     // raw input: number | string | boolean | '=formula'
@@ -209,8 +209,8 @@
     }
     // display value (computed)
     value(sheet, r, c) { try { return this.getVal(sheet, r, c); } catch (e) { return isErr(e) ? e : E('#VALUE!'); } }
-    toJSON() { const o = { order: this.order, sheets: {} }; for (const n of this.order) { const sh = this.sheets[n]; const cells = {}; for (const k in sh.cells) { const c = sh.cells[k]; cells[k] = c.f ? c.f : c.v; } o.sheets[n] = { cells, fmt: sh.fmt, style: sh.style, colW: sh.colW, rowH: sh.rowH }; } return o; }
-    static fromJSON(o) { const wb = new Workbook(); wb.sheets = {}; wb.order = []; for (const n of o.order) { const sh = wb.addSheet(n); const s = o.sheets[n]; for (const k in s.cells) { const v = s.cells[k]; sh.cells[k] = (typeof v === 'string' && v[0] === '=') ? { f: v } : { v }; } sh.fmt = s.fmt || {}; sh.style = s.style || {}; sh.colW = s.colW || {}; sh.rowH = s.rowH || {}; } if (!wb.order.length) wb.addSheet('Sheet1'); return wb; }
+    toJSON() { const o = { order: this.order, sheets: {} }; for (const n of this.order) { const sh = this.sheets[n]; const cells = {}; for (const k in sh.cells) { const c = sh.cells[k]; cells[k] = c.f ? c.f : c.v; } o.sheets[n] = { cells, fmt: sh.fmt, style: sh.style, colW: sh.colW, rowH: sh.rowH, merges: sh.merges || [], defSz: sh.defSz, defFont: sh.defFont, grid: sh.grid }; } return o; }
+    static fromJSON(o) { const wb = new Workbook(); wb.sheets = {}; wb.order = []; for (const n of o.order) { const sh = wb.addSheet(n); const s = o.sheets[n]; for (const k in s.cells) { const v = s.cells[k]; sh.cells[k] = (typeof v === 'string' && v[0] === '=') ? { f: v } : { v }; } sh.fmt = s.fmt || {}; sh.style = s.style || {}; sh.colW = s.colW || {}; sh.rowH = s.rowH || {}; sh.merges = s.merges || []; sh.defSz = s.defSz; sh.defFont = s.defFont; sh.grid = s.grid; } if (!wb.order.length) wb.addSheet('Sheet1'); return wb; }
   }
 
   // ---------- evaluation ----------
