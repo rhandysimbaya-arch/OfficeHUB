@@ -2,14 +2,14 @@
 // so this also works from file:// inside an Android WebView.
 const OCR = (function () {
   let w = null, loading = null, jid = 0; const pending = {};
-  function xhr(url, type) { return new Promise((res, rej) => { const x = new XMLHttpRequest(); x.open('GET', url); x.responseType = type; x.onload = () => (x.status === 0 || x.status === 200) && x.response ? res(x.response) : rej(new Error('Cannot load ' + url)); x.onerror = () => rej(new Error('Cannot load ' + url)); x.send(); }); }
+  function xhr(url, type) { const viaX = () => new Promise((res, rej) => { const x = new XMLHttpRequest(); x.open('GET', url); x.responseType = type; x.onload = () => (x.status === 0 || x.status === 200) && x.response ? res(x.response) : rej(new Error('Cannot load ' + url)); x.onerror = () => rej(new Error('Cannot load ' + url)); x.send(); }); return viaX().catch(() => fetch(url).then(r => { if (!r.ok && r.status !== 0) throw new Error('Cannot load ' + url); return type === 'blob' ? r.blob() : r.arrayBuffer(); })); }
   function call(action, payload, transfer, onprog) {
     return new Promise((res, rej) => { const id = ++jid; pending[id] = { res, rej, onprog }; w.postMessage({ workerId: 'hub', jobId: id, action, payload }, transfer || []); });
   }
   async function init() {
     if (w) return w; if (loading) return loading;
     loading = (async () => {
-      const wjs = await xhr('libs/ocr/worker.min.js', 'blob'), cjs = await xhr('libs/ocr/core.js', 'blob'), lang = new Uint8Array(await xhr('libs/ocr/eng.traineddata.gz', 'arraybuffer'));
+      const wjs = await xhr('libs/ocr/worker.min.js', 'blob'), cjs = await xhr('libs/ocr/core.js', 'blob'), lang = new Uint8Array(await xhr('libs/ocr/eng.lang.bin', 'arraybuffer'));
       w = new Worker(URL.createObjectURL(wjs));
       w.onmessage = e => { const d = e.data, p = pending[d.jobId]; if (!p) return; if (d.status === 'resolve') { delete pending[d.jobId]; p.res(d.data); } else if (d.status === 'reject') { delete pending[d.jobId]; p.rej(new Error(String(d.data))); } else if (d.status === 'progress' && p.onprog && d.data) p.onprog(d.data); };
       w.onerror = e => { Object.keys(pending).forEach(k => { pending[k].rej(new Error('OCR worker error: ' + (e.message || ''))); delete pending[k]; }); };
