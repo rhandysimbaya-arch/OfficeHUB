@@ -102,6 +102,17 @@ const XS = (function () {
         });
       });
       find(d, 'mergeCell').forEach(m => info.merges.push(m.getAttribute('ref')));
+      info.dv = [];
+      find(d, 'dataValidation').forEach(v => {
+        const f = n => { const e = Array.from(v.children).find(x => x.localName === n); return e ? e.textContent : ''; };
+        const T = { textLength: 'length' }, O = { greaterThan: 'gt', lessThan: 'lt', greaterThanOrEqual: 'ge', lessThanOrEqual: 'le' };
+        const type = v.getAttribute('type') || 'any'; const op = v.getAttribute('operator') || 'between';
+        let v1 = f('formula1'), v2 = f('formula2'); if (type === 'list') { if (/^".*"$/.test(v1)) v1 = v1.slice(1, -1); else if (v1) v1 = '=' + v1.replace(/\$/g, ''); }
+        const base = { type: T[type] || type, op: O[op] || op, v1, v2, blank: v.getAttribute('allowBlank') === '1', drop: v.getAttribute('showDropDown') !== '1',
+          im: { on: v.getAttribute('showInputMessage') === '1', t: v.getAttribute('promptTitle') || '', m: v.getAttribute('prompt') || '' },
+          er: { on: v.getAttribute('showErrorMessage') === '1', st: v.getAttribute('errorStyle') || 'stop', t: v.getAttribute('errorTitle') || '', m: v.getAttribute('error') || '' } };
+        (v.getAttribute('sqref') || '').split(/\s+/).filter(Boolean).forEach(ref => { const [a, b] = ref.split(':'); const r1 = rowOf(a), c1 = colRef(a), r2 = rowOf(b || a), c2 = colRef(b || a); info.dv.push(Object.assign({ r1, c1, r2, c2 }, base)); });
+      });
       // merged cells: top/left from master, bottom/right from the far cells; bg from master
       const pa = a => ({ r: rowOf(a), c: colRef(a) });
       info.merges = info.merges.map(ref => { const [a, b] = ref.split(':'); const p = pa(a), q = pa(b || a); return { r1: p.r, c1: p.c, r2: q.r, c2: q.c }; }).filter(m => m.r2 > m.r1 || m.c2 > m.c1);

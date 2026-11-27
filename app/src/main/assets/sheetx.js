@@ -104,13 +104,14 @@ function colWidthDlg() { askNum('Column width (characters)', Math.round((colW(se
 function rowHeightDlg() { askNum('Row height (points)', Math.round(rowHt(sel.r1) / PT * 10) / 10, n => { for (let r = sel.r1; r <= sel.r2; r++) sh().rowH[r] = Math.round(n * PT); save(); build(); }); }
 const _cx = document.createElement('canvas').getContext('2d');
 function fontOf(st) { const S = sh(); return (st && st.b ? 'bold ' : '') + (st && st.i ? 'italic ' : '') + ((st && st.sz) || S.defSz || 14.67) + 'px ' + (famCss((st && st.font) || S.defFont) || 'sans-serif'); }
-function autoFitCol() {
-  for (let c = sel.c1; c <= sel.c2; c++) { let w = 30; for (let r = 1; r <= ROWS; r++) { if (MM[key(r, c)]) continue; const t = cellText(r, c); if (!t) continue; const st = styleOf(r, c); if (st && st.wrap) continue; _cx.font = fontOf(st); w = Math.max(w, _cx.measureText(t).width + 14 + (st && st.indent ? st.indent * 9 : 0)); } sh().colW[c] = Math.ceil(w); }
+function autoFitCol(only) {
+  const lo = typeof only === 'number' ? only : sel.c1, hi = typeof only === 'number' ? only : sel.c2;
+  for (let c = lo; c <= hi; c++) { let w = 30; for (let r = 1; r <= ROWS; r++) { if (MM[key(r, c)]) continue; const t = cellText(r, c); if (!t) continue; const st = styleOf(r, c); if (st && st.wrap) continue; _cx.font = fontOf(st); w = Math.max(w, _cx.measureText(t).width + 14 + (st && st.indent ? st.indent * 9 : 0)); } sh().colW[c] = Math.ceil(w); }
   save(); build();
 }
 function wrapLines(txt, font, w) { _cx.font = font; let lines = 0; for (const para of String(txt).split('\n')) { let line = '', n = 1; for (const word of para.split(' ')) { const t = line ? line + ' ' + word : word; if (_cx.measureText(t).width > w && line) { n++; line = word; } else line = t; } lines += n; } return lines; }
-function autoFitRow(quiet) {
-  const r1 = quiet ? sel.r1 : sel.r1, r2 = sel.r2;
+function autoFitRow(quiet, only) {
+  const r1 = typeof only === 'number' ? only : sel.r1, r2 = typeof only === 'number' ? only : sel.r2;
   for (let r = r1; r <= r2; r++) { let h = Math.round((sh().defSz || 14.67) * 1.5); for (let c = 1; c <= COLS; c++) { const mm = MM[key(r, c)]; if (mm === 'h') continue; const t = cellText(r, c); if (!t) continue; const st = styleOf(r, c) || {}; const fs = st.sz || sh().defSz || 14.67; let w = 0; for (let k = c; k < c + (mm ? mm.cs : 1); k++) w += colW(k); if (st.wrap) { const n = wrapLines(t, fontOf(st), w - 10); h = Math.max(h, Math.ceil(n * fs * 1.2 + 6)); } else h = Math.max(h, Math.ceil(fs * 1.5)); } sh().rowH[r] = h; }
   save(); build();
 }
@@ -278,7 +279,7 @@ function modalOpen() { for (const id of ['mGen', 'mUF', 'mVba', 'mRun']) { const
 function insertNow(kind) { const d = new Date(); const ser = Math.floor(E.dateToSerial(d)); if (kind === 'time') { const fr = (d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds()) / 86400; wb.setRaw(cur, anchor.r, anchor.c, ser + fr); sh().fmt[key(anchor.r, anchor.c)] = 'h:mm AM/PM'; } else { wb.setRaw(cur, anchor.r, anchor.c, ser); sh().fmt[key(anchor.r, anchor.c)] = 'm/d/yyyy'; } save(); refresh(); }
 function selectRowCol(mode) { if (mode === 'row') setSel(anchor.r, 1, anchor.r, COLS, anchor.r, anchor.c); else setSel(1, anchor.c, ROWS, anchor.c, anchor.r, anchor.c); }
 function shortcutsHelp() {
-  const L = [['Ctrl+C / X / V', 'Copy / Cut / Paste'], ['Ctrl+Alt+V', 'Paste Special (then V=Values, F=Formulas, T=Formats, E=Transpose)'], ['Ctrl+Shift+V', 'Paste values only'], ['Ctrl+Z / Y', 'Undo / Redo'], ['Ctrl+B / I / U', 'Bold / Italic / Underline'], ['Ctrl+5', 'Strikethrough'], ['Ctrl+A', 'Select all'], ['Ctrl+D / R', 'Fill down / right'], ['Ctrl+F / H', 'Find & Replace'], ['Ctrl+S', 'Save'], ['Ctrl+O', 'Open'], ['Ctrl+1', 'Format Cells'], ['Ctrl+Shift+1 / 2 / 3', 'Number / Time / Date format'], ['Ctrl+Shift+4 / 5', 'Currency / Percent'], ['Ctrl+; / Ctrl+Shift+;', 'Insert date / time'], ['Ctrl++ / Ctrl+-', 'Insert / delete row'], ['Ctrl+9 / Ctrl+0', 'Hide row / column'], ['Ctrl+Arrow', 'Jump to edge of data'], ['Ctrl+Home / End', 'First cell / last used cell'], ['Shift+Arrow', 'Extend selection'], ['Ctrl+Shift+Arrow', 'Extend to edge of data'], ['Ctrl+Space / Shift+Space', 'Select column / row'], ['Tab / Shift+Tab', 'Move right / left'], ['Enter / Shift+Enter', 'Move down / up'], ['Page Up / Down', 'Scroll one screen'], ['F2', 'Edit cell'], ['F4', 'Cycle $ in reference (editing)'], ['F5 / Ctrl+G', 'Go to'], ['Alt+=', 'AutoSum'], ['Ctrl+Enter', 'Fill selection with entry'], ['Delete', 'Clear contents'], ['Esc', 'Cancel'],['Ctrl+PgUp / PgDn','Previous / next sheet'],['Alt+PgUp / PgDn','Move one screen left / right'],['End, then Arrow','End mode: jump to edge of data'],['Ctrl+A (twice)','Select region, then whole sheet'],['Ctrl+Shift+Space / Ctrl+*','Select current region'],['Shift+Home, Ctrl+Shift+Home/End','Extend selection to row start / A1 / last cell'],['Alt+;','Select visible cells only (copy skips hidden)'],['Ctrl+.','Move active cell to next corner'],['Ctrl+Backspace','Scroll to active cell'],["Ctrl+' / Ctrl+\"",'Copy formula / value from cell above'],['Ctrl+E','Flash Fill (give an example first)'],['Ctrl+Shift+& / _','Outline border / remove border'],['Ctrl+Shift+L, Alt+Down','Filter'],['Ctrl+T / Ctrl+L','Format as Table'],['Ctrl+`','Show / hide formulas'],['F9 / Shift+F9','Recalculate'],['Shift+F11 / Alt+Shift+F1','New sheet'],['F11 / Alt+F1','Insert chart from selection'],['F12','Save As'],['Ctrl+P','Print'],['Ctrl+N','New workbook'],['Ctrl+W / Ctrl+F4','Close (back to menu)'],['F1','This help'],['Ctrl+F1','Show / hide ribbon'],['Alt, H/N/P/M/A/W/F','Ribbon KeyTips (switch tabs)'],['Alt,H,A,C/L/R','Center / left / right align'],['Alt,H,W','Wrap text'],['Alt,H,M,C','Merge & center'],['Alt,H,0 / 9','Increase / decrease decimals'],['Alt,H,O,I / A','AutoFit column / row'],['Alt,H,O,W / H','Column width / row height'],['Alt,H,I,R / C','Insert row / column'],['Alt,H,D,R / C','Delete row / column'],['Alt,H,O,R','Rename sheet'],['Alt,H,D,S','Delete sheet'],['Alt,A,S,A / D','Sort ascending / descending'],['Alt,A,M','Remove duplicates'],['Alt,A,E','Text to Columns'],['Alt,W,F,F','Freeze / unfreeze panes']];
+  const L = [['Ctrl+C / X / V', 'Copy / Cut / Paste'], ['Ctrl+Alt+V', 'Paste Special (then V=Values, F=Formulas, T=Formats, E=Transpose)'], ['Ctrl+Shift+V', 'Paste values only'], ['Ctrl+Z / Y', 'Undo / Redo'], ['Ctrl+B / I / U', 'Bold / Italic / Underline'], ['Ctrl+5', 'Strikethrough'], ['Ctrl+A', 'Select all'], ['Ctrl+D / R', 'Fill down / right'], ['Ctrl+F / H', 'Find & Replace'], ['Ctrl+S', 'Save'], ['Ctrl+O', 'Open'], ['Ctrl+1', 'Format Cells'], ['Ctrl+Shift+1 / 2 / 3', 'Number / Time / Date format'], ['Ctrl+Shift+4 / 5', 'Currency / Percent'], ['Ctrl+; / Ctrl+Shift+;', 'Insert date / time'], ['Ctrl++ / Ctrl+-', 'Insert / delete row'], ['Ctrl+9 / Ctrl+0', 'Hide row / column'], ['Ctrl+Arrow', 'Jump to edge of data'], ['Ctrl+Home / End', 'First cell / last used cell'], ['Shift+Arrow', 'Extend selection'], ['Ctrl+Shift+Arrow', 'Extend to edge of data'], ['Ctrl+Space / Shift+Space', 'Select column / row'], ['Tab / Shift+Tab', 'Move right / left'], ['Enter / Shift+Enter', 'Move down / up'], ['Page Up / Down', 'Scroll one screen'], ['F2', 'Edit cell'], ['F4', 'Cycle $ in reference (editing)'], ['F5 / Ctrl+G', 'Go to'], ['Alt+=', 'AutoSum'], ['Ctrl+Enter', 'Fill selection with entry'], ['Delete', 'Clear contents'], ['Esc', 'Cancel'],['Ctrl+PgUp / PgDn','Previous / next sheet'],['Alt+PgUp / PgDn','Move one screen left / right'],['End, then Arrow','End mode: jump to edge of data'],['Ctrl+A (twice)','Select region, then whole sheet'],['Ctrl+Shift+Space / Ctrl+*','Select current region'],['Shift+Home, Ctrl+Shift+Home/End','Extend selection to row start / A1 / last cell'],['Alt+;','Select visible cells only (copy skips hidden)'],['Ctrl+.','Move active cell to next corner'],['Ctrl+Backspace','Scroll to active cell'],["Ctrl+' / Ctrl+\"",'Copy formula / value from cell above'],['Ctrl+E','Flash Fill (give an example first)'],['Ctrl+Shift+& / _','Outline border / remove border'],['Ctrl+Shift+L, Alt+Down','Filter'],['Ctrl+T / Ctrl+L','Format as Table'],['Ctrl+`','Show / hide formulas'],['F9 / Shift+F9','Recalculate'],['Shift+F11 / Alt+Shift+F1','New sheet'],['F11 / Alt+F1','Insert chart from selection'],['F12','Save As'],['Ctrl+P','Print'],['Ctrl+N','New workbook'],['Ctrl+W / Ctrl+F4','Close (back to menu)'],['F1','This help'],['Ctrl+F1','Show / hide ribbon'],['Alt, H/N/P/M/A/W/F','Ribbon KeyTips (switch tabs)'],['Alt,H,A,C/L/R','Center / left / right align'],['Alt,H,W','Wrap text'],['Alt,H,M,C','Merge & center'],['Alt,H,0 / 9','Increase / decrease decimals'],['Alt,H,O,I / A','AutoFit column / row'],['Alt,H,O,W / H','Column width / row height'],['Alt,H,I,R / C  or  Alt,I,R / C','Insert row / column'],['Alt,A,V,V','Data Validation'],['Alt,H,D,R / C','Delete row / column'],['Alt,H,O,R','Rename sheet'],['Alt,H,D,S','Delete sheet'],['Alt,A,S,A / D','Sort ascending / descending'],['Alt,A,M','Remove duplicates'],['Alt,A,E','Text to Columns'],['Alt,W,F,F','Freeze / unfreeze panes']];
   gen('Keyboard shortcuts', '<table style="width:100%;font-size:13px;border-collapse:collapse">' + L.map(x => `<tr><td style="padding:3px 6px;border-bottom:1px solid #eee;white-space:nowrap"><b>${x[0]}</b></td><td style="padding:3px 6px;border-bottom:1px solid #eee">${x[1]}</td></tr>`).join('') + '</table>', []);
 }
 /* ---------------- Excel Keyboard Shortcuts Master Reference additions ---------------- */
@@ -326,7 +327,7 @@ const TIPS = {
   HAC: () => sty('align', 'center'), HAL: () => sty('align', 'left'), HAR: () => sty('align', 'right'), HOI: () => autoFitCol(), HOA: () => autoFitRow(),
   HH: () => { const e = document.querySelector('[title*="Fill Color" i],[title*="Fill color" i]'); stMsg('Use Fill Color in the Home ribbon'); if (e) e.click && e.click(); }, HB: () => bordersSel('all'), HW: () => wrapToggle(), HMC: () => mergeSel('center'),
   H0: () => decs(1), H9: () => decs(-1), HIR: () => insRC('r'), HIC: () => insRC('c'), HDR: () => delRC('r'), HDC: () => delRC('c'), HOH: () => rowHeightDlg(), HOW: () => colWidthDlg(),
-  HOR: () => renSheet(cur), HDS: () => delSheetNow(), ASA: () => sortSel(1), ASD: () => sortSel(-1), ASS: () => filterDlg(), AM: () => dedupe(), AE: () => textToCols(), WFF: () => freezeMenu(sh().frz ? 'none' : 'sel'),
+  IC: () => insRC('c'), IR: () => insRC('r'), AVV: () => dvDlg(), HOR: () => renSheet(cur), HDS: () => delSheetNow(), ASA: () => sortSel(1), ASD: () => sortSel(-1), ASS: () => filterDlg(), AM: () => dedupe(), AE: () => textToCols(), WFF: () => freezeMenu(sh().frz ? 'none' : 'sel'),
   H: 'Home', N: 'Insert', P: 'Page Layout', M: 'Formulas', A: 'Data', R: 'Review', W: 'View', F: 'File', Q: 'Search'
 };
 function tipTab(t) { if (t === 'File') { openFile(); return; } if (t === 'Review' || t === 'Search') { stMsg('No ' + t + ' tab in this app'); return; } const d = [...document.querySelectorAll('#rtabs div')].find(x => x.textContent === t); if (d) d.click(); }
@@ -343,6 +344,7 @@ function tipKey(e) {
 }
 function xkeys(e, k, kl, ctrl, prevent) {
   const sh_ = e.shiftKey, alt = e.altKey;
+  if (dvMenuOn && dvMenuKey(e)) return true;
   if (tipMode && tipKey(e)) return true;
   if (k === 'Alt') { if (!e.repeat) { tipMode = true; tipSeq = ''; stMsg('Alt: press H Home, N Insert, P Page Layout, M Formulas, A Data, W View, F File'); } prevent(); return true; }
   if (k === 'Shift' || k === 'Control' || k === 'Meta') return false;
@@ -350,7 +352,7 @@ function xkeys(e, k, kl, ctrl, prevent) {
   if (alt && !ctrl) {
     if (k === 'PageDown') { prevent(); goCell(anchor.r, anchor.c + 10); return true; } if (k === 'PageUp') { prevent(); goCell(anchor.r, anchor.c - 10); return true; }
     if (k === ';') { prevent(); visOnly = true; stMsg('Visible cells only (copy skips hidden rows/columns)'); return true; }
-    if (k === 'ArrowDown') { prevent(); filterDlg(); return true; }
+    if (k === 'ArrowDown') { prevent(); if (dvListAt(anchor.r, anchor.c)) dvOpen(); else filterDlg(); return true; }
     if (k === 'F1' && sh_) { prevent(); addSheet(); return true; } if (k === 'F1') { prevent(); if (sel.r1 !== sel.r2 || sel.c1 !== sel.c2) addChart('bar'); else stMsg('Select the data range first'); return true; }
     if (k === 'F4') { prevent(); const b = window.__back; if (b) b(); return true; }
     if (k === 'F5') { prevent(); refresh(); return true; }
@@ -452,8 +454,170 @@ document.addEventListener('keydown', e => {
     case 'F2': prevent(); startEdit(String(wb.getRaw(cur, anchor.r, anchor.c))); return;
     case 'F5': prevent(); $('nm').focus(); $('nm').select(); return;
     case 'Delete': case 'Backspace': prevent(); clearSel(); return;
-    case 'Escape': PAINT = null; clip = null; $('stL').textContent = 'Ready'; return;
+    case 'Escape': { const k0 = clip; PAINT = null; clip = null; if (k0 && window.repaintRng) repaintRng(k0.s); }  $('stL').textContent = 'Ready'; return;
     case ' ': if (e.shiftKey) { prevent(); selectRowCol('row'); return; } break;
   }
   if (k.length === 1 && !e.altKey) { prevent(); startEdit(k); }
 }, true);
+
+/* ---------------- copy/cut "marching ants" indicator ---------------- */
+function antCls(r, c) {
+  const k = clip; if (!k || !k.ants || k.sheet !== cur) return ''; const s = k.s;
+  if (r < s.r1 || r > s.r2 || c < s.c1 || c > s.c2) return '';
+  return ' ant' + (r === s.r1 ? ' aT' : '') + (r === s.r2 ? ' aB' : '') + (c === s.c1 ? ' aL' : '') + (c === s.c2 ? ' aR' : '');
+}
+function repaintRng(s) { for (let r = s.r1; r <= Math.min(s.r2, ROWS); r++) for (let c = s.c1; c <= Math.min(s.c2, COLS); c++) paint(r, c); }
+const _copy2 = copy;
+copy = function (cut) { const old = clip && clip.ants ? clip.s : null; _copy2(cut); if (clip) clip.ants = true; if (old) repaintRng(old); if (clip) repaintRng(clip.s); };
+const _paste2 = paste;
+paste = function () { const k = clip; _paste2(); if (k) { k.ants = false; repaintRng(k.s); } };
+const _pasteSp2 = pasteSpecial;
+pasteSpecial = function (m) { const k = clip; _pasteSp2(m); if (k) { k.ants = false; repaintRng(k.s); } };
+
+/* ---------------- double-click / drag column & row borders ---------------- */
+(function () {
+  const g = $('grid'); const TOL = 6;
+  function edge(e) {
+    const th = e.target.closest && e.target.closest('th'); if (!th) return null; const R = th.getBoundingClientRect();
+    if (/^ch\d+$/.test(th.id)) { const c = +th.id.slice(2); if (R.right - e.clientX <= TOL) return { t: 'c', i: c, th }; if (e.clientX - R.left <= TOL && c > 1) return { t: 'c', i: c - 1 }; }
+    else if (/^rh\d+$/.test(th.id)) { const r = +th.id.slice(2); if (R.bottom - e.clientY <= TOL) return { t: 'r', i: r, th }; if (e.clientY - R.top <= TOL && r > 1) return { t: 'r', i: r - 1 }; }
+    return null;
+  }
+  g.addEventListener('dblclick', e => { const ed = edge(e); if (!ed) return; e.preventDefault(); e.stopPropagation(); if (ed.t === 'c') autoFitCol(ed.i); else autoFitRow(true, ed.i); stMsg(ed.t === 'c' ? 'Column ' + E.numToCol(ed.i) + ' auto-fit' : 'Row ' + ed.i + ' auto-fit'); }, true);
+  g.addEventListener('mousemove', e => { if (rs) return; const ed = edge(e); g.classList.toggle('rszc', !!ed && ed.t === 'c'); g.classList.toggle('rszr', !!ed && ed.t === 'r'); });
+  let rs = null;
+  g.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'touch') return; const ed = edge(e); if (!ed) return; e.preventDefault(); e.stopPropagation();
+    const thx = ed.t === 'c' ? $('ch' + ed.i) : $('rh' + ed.i); const R = thx.getBoundingClientRect();
+    const base = ed.t === 'c' ? colW(ed.i) : rowHt(ed.i); const z = (ed.t === 'c' ? R.width : R.height) / Math.max(1, base);
+    rs = { t: ed.t, i: ed.i, x: e.clientX, y: e.clientY, base, z, v: base };
+  }, true);
+  window.addEventListener('pointermove', e => { if (!rs) return; const d = rs.t === 'c' ? e.clientX - rs.x : e.clientY - rs.y; rs.v = Math.max(rs.t === 'c' ? 8 : 6, Math.round(rs.base + d / (rs.z || 1))); stMsg((rs.t === 'c' ? 'Width: ' : 'Height: ') + rs.v + ' px'); });
+  window.addEventListener('pointerup', () => { if (!rs) return; const o = rs; rs = null; if (o.v === o.base) return; if (o.t === 'c') sh().colW[o.i] = o.v; else sh().rowH[o.i] = o.v; save(); build(); });
+})();
+
+/* ---------------- Data Validation ---------------- */
+function dvRuleAt(sheet, r, c) { const S = wb.sheets[sheet]; const L = (S && S.dv) || []; for (let i = L.length - 1; i >= 0; i--) { const q = L[i]; if (r >= q.r1 && r <= q.r2 && c >= q.c1 && c <= q.c2) return q; } return null; }
+function dvListAt(r, c) { const q = dvRuleAt(cur, r, c); return q && q.type === 'list' && q.drop !== false ? q : null; }
+function dvListItems(q, sheet) {
+  const s = String(q.v1 === undefined ? '' : q.v1).trim(); if (!s) return [];
+  if (s[0] === '=') {
+    let t = s.slice(1).trim().replace(/\$/g, ''); let sn = sheet; const m0 = /^(?:'([^']+)'|([^'!]+))!(.*)$/.exec(t); if (m0) { sn = m0[1] || m0[2]; t = m0[3]; }
+    const nm = book.names && book.names[t.toUpperCase()]; if (nm) { const m1 = /^(?:'([^']+)'|([^'!]+))!(.*)$/.exec(String(nm).replace(/\$/g, '')); if (m1) { sn = m1[1] || m1[2]; t = m1[3]; } else t = String(nm).replace(/\$/g, ''); }
+    const m = /^([A-Z]+)(\d+)(?::([A-Z]+)(\d+))?$/i.exec(t); if (!m || !wb.sheets[sn]) return [];
+    const c1 = E.colToNum(m[1].toUpperCase()), r1 = +m[2], c2 = m[3] ? E.colToNum(m[3].toUpperCase()) : c1, r2 = m[4] ? +m[4] : r1; const out = [];
+    for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) { const v = wb.value(sn, r, c); if (v !== null && v !== undefined && v !== '') out.push(String(E.isErr(v) ? '' : v)); } return out;
+  }
+  return s.split(',').map(x => x.trim()).filter(x => x !== '');
+}
+function dvBound(sheet, s, type) {
+  if (s === undefined || s === null || String(s).trim() === '') return null; s = String(s).trim();
+  if (s[0] === '=') { try { const v = E.evaluate(wb, sheet, s); return typeof v === 'number' ? v : (v && v.v !== undefined ? v.v : v); } catch (e) { return null; } }
+  if (type === 'time') { const m = /^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i.exec(s); if (m) { let h = +m[1]; if (m[4]) { h = h % 12 + (/pm/i.test(m[4]) ? 12 : 0); } return (h * 3600 + +m[2] * 60 + +(m[3] || 0)) / 86400; } }
+  const p = wb.parseInput(s); return p.v;
+}
+function dvCmp(op, x, a, b) {
+  switch (op) { case 'between': return x >= a && x <= b; case 'notBetween': return !(x >= a && x <= b); case 'equal': return x === a; case 'notEqual': return x !== a;
+    case 'gt': return x > a; case 'lt': return x < a; case 'ge': return x >= a; case 'le': return x <= a; } return true;
+}
+function dvCheck(sheet, r, c, raw) {
+  const q = dvRuleAt(sheet, r, c); if (!q || q.type === 'any') return { ok: true };
+  if (raw === '' || raw === null || raw === undefined) return { ok: q.blank !== false, q };
+  raw = String(raw); const isF = raw[0] === '=' && raw.length > 1;
+  if (isF && q.type !== 'custom') return { ok: true, q };
+  let ok = true;
+  if (q.type === 'list') { const items = dvListItems(q, sheet); ok = items.some(x => x.toLowerCase() === raw.trim().toLowerCase() || (x !== '' && !isNaN(+x) && !isNaN(+raw) && +x === +raw)); }
+  else if (q.type === 'length') { const a = dvBound(sheet, q.v1, 'n'), b = dvBound(sheet, q.v2, 'n'); ok = dvCmp(q.op, raw.length, a, b); }
+  else if (q.type === 'custom') {
+    const S = wb.sheets[sheet], old = wb.getRaw(sheet, r, c); let res = false;
+    try { wb.setRaw(sheet, r, c, raw); wb.recalc(); const f = shiftFormula(String(q.v1 || ''), r - q.r1, c - q.c1); const v = E.evaluate(wb, sheet, f); res = !(v === false || v === 0 || v === '' || v === null || (v && v.err) || E.isErr(v)); } catch (e) { res = false; }
+    wb.setRaw(sheet, r, c, old); wb.recalc(); ok = res;
+  }
+  else {
+    const p = wb.parseInput(raw); let v = p.v; if (q.type === 'time') { const t = dvBound(sheet, raw, 'time'); if (typeof t === 'number') v = t; }
+    if (typeof v !== 'number') ok = false; else {
+      if (q.type === 'whole' && !Number.isInteger(v)) ok = false; else if (q.type === 'date' || q.type === 'time') { const a = dvBound(sheet, q.v1, q.type), b = dvBound(sheet, q.v2, q.type); ok = dvCmp(q.op, q.type === 'date' ? Math.floor(v) : v, q.type === 'date' && a !== null ? Math.floor(a) : a, q.type === 'date' && b !== null ? Math.floor(b) : b); }
+      else { const a = dvBound(sheet, q.v1, 'n'), b = dvBound(sheet, q.v2, 'n'); ok = dvCmp(q.op, v, a, b); }
+    }
+  }
+  return { ok, q };
+}
+const _commitFx = commitFx;
+commitFx = function (move) {
+  if (editing || editCell) {
+    const ec = editCell || { sheet: cur, r: anchor.r, c: anchor.c }; const v = $('fx').value; const res = dvCheck(ec.sheet, ec.r, ec.c, v);
+    if (!res.ok && res.q) {
+      const er = res.q.er || {}, msg = (er.t ? er.t + '\n\n' : '') + (er.m || "This value doesn't match the data validation restrictions defined for this cell."); const st = er.on === false ? 'none' : (er.st || 'stop');
+      if (st === 'stop') { alert(msg); try { $('fx').focus(); } catch (e) { } return; }
+      if (st === 'warning') { if (!confirm(msg + '\n\nDo you want to continue?')) { try { $('fx').focus(); } catch (e) { } return; } }
+      else if (st === 'information') { if (!confirm(msg + '\n\nOK = keep the value, Cancel = reject it.')) { try { $('fx').focus(); } catch (e) { } return; } }
+    }
+  }
+  _commitFx(move);
+};
+/* dropdown button, input message, list menu */
+let dvMenuOn = false, dvSel = 0, dvItems = [];
+function dvEl(id) { let e = document.getElementById(id); if (!e) { e = document.createElement('div'); e.id = id; document.body.appendChild(e); } return e; }
+function dvUpdate() {
+  const btn = dvEl('dvBtn'), tip = dvEl('dvTip'); btn.style.display = tip.style.display = 'none'; if (editing) return;
+  const q = dvRuleAt(cur, anchor.r, anchor.c); const td = tds[anchor.r] && tds[anchor.r][anchor.c]; if (!q || !td) return;
+  const R = td.getBoundingClientRect(), W = $('wrap').getBoundingClientRect(); if (R.bottom < W.top + 10 || R.top > W.bottom || R.right < W.left + 10 || R.left > W.right) return;
+  if (q.type === 'list' && q.drop !== false) { btn.textContent = '▼'; btn.style.cssText = `display:block;left:${R.right - 18}px;top:${R.top}px;height:${Math.max(16, R.height)}px;line-height:${Math.max(16, R.height)}px`; btn.onclick = ev => { ev.stopPropagation(); dvOpen(); }; }
+  if (q.im && q.im.on && (q.im.t || q.im.m)) { tip.innerHTML = (q.im.t ? '<b>' + q.im.t.replace(/</g, '&lt;') + '</b><br>' : '') + (q.im.m || '').replace(/</g, '&lt;'); tip.style.display = 'block'; tip.style.left = Math.min(R.left, innerWidth - 250) + 'px'; tip.style.top = (R.bottom + 3) + 'px'; }
+}
+const _paintSel2 = paintSel;
+paintSel = function (p) { _paintSel2(p); dvUpdate(); };
+window.addEventListener('load', () => { $('wrap').addEventListener('scroll', () => { dvUpdate(); dvClose(); }); setTimeout(dvUpdate, 300); });
+function dvClose() { dvMenuOn = false; const m = document.getElementById('dvMenu'); if (m) m.style.display = 'none'; }
+function dvPick(i) { const v = dvItems[i]; dvClose(); if (v === undefined) return; setCell(cur, anchor.r, anchor.c, v); dvUpdate(); }
+function dvOpen() {
+  const q = dvListAt(anchor.r, anchor.c); if (!q) return; dvItems = dvListItems(q, cur); const m = dvEl('dvMenu'); const td = tds[anchor.r][anchor.c]; const R = td.getBoundingClientRect();
+  const curv = String(wb.getRaw(cur, anchor.r, anchor.c)); dvSel = Math.max(0, dvItems.findIndex(x => x === curv));
+  m.innerHTML = dvItems.length ? dvItems.map((x, i) => `<div data-i="${i}" class="${i === dvSel ? 'on' : ''}">${String(x).replace(/</g, '&lt;')}</div>`).join('') : '<div style="color:#888">(no items)</div>';
+  m.style.display = 'block'; m.style.left = Math.min(R.left, innerWidth - 140) + 'px'; m.style.top = (R.bottom) + 'px'; m.onclick = ev => { const d = ev.target.closest('div[data-i]'); if (d) dvPick(+d.dataset.i); }; dvMenuOn = true;
+}
+function dvMenuKey(e) {
+  const k = e.key; const m = document.getElementById('dvMenu'); const mv = d => { dvSel = Math.max(0, Math.min(dvItems.length - 1, dvSel + d)); [...m.children].forEach((x, i) => x.classList.toggle('on', i === dvSel)); const x = m.children[dvSel]; if (x) x.scrollIntoView({ block: 'nearest' }); };
+  if (k === 'ArrowDown') { e.preventDefault(); e.stopPropagation(); mv(1); return true; } if (k === 'ArrowUp') { e.preventDefault(); e.stopPropagation(); mv(-1); return true; }
+  if (k === 'Enter' || k === 'Tab') { e.preventDefault(); e.stopPropagation(); dvPick(dvSel); return true; } if (k === 'Escape') { e.preventDefault(); e.stopPropagation(); dvClose(); return true; }
+  dvClose(); return false;
+}
+document.addEventListener('pointerdown', e => { if (dvMenuOn && !(e.target.closest && (e.target.closest('#dvMenu') || e.target.closest('#dvBtn')))) dvClose(); }, true);
+/* dialog */
+function dvDlg() {
+  const q = dvRuleAt(cur, anchor.r, anchor.c) || {}; const im = q.im || {}, er = q.er || { on: true, st: 'stop' };
+  const sel1 = (id, opts, v) => `<select id="${id}" onchange="dvSync()">${opts.map(o => `<option value="${o[0]}" ${o[0] === v ? 'selected' : ''}>${o[1]}</option>`).join('')}</select>`;
+  const esc = x => String(x === undefined ? '' : x).replace(/"/g, '&quot;');
+  const h = `<label>Allow</label>${sel1('dvA', [['any', 'Any value'], ['whole', 'Whole number'], ['decimal', 'Decimal'], ['list', 'List'], ['date', 'Date'], ['time', 'Time'], ['length', 'Text length'], ['custom', 'Custom (formula)']], q.type || 'any')}
+  <div id="dvOpW"><label>Data</label>${sel1('dvO', [['between', 'between'], ['notBetween', 'not between'], ['equal', 'equal to'], ['notEqual', 'not equal to'], ['gt', 'greater than'], ['lt', 'less than'], ['ge', 'greater than or equal to'], ['le', 'less than or equal to']], q.op || 'between')}</div>
+  <div id="dvV1W"><label id="dvL1">Minimum</label><input type="text" id="dvV1" value="${esc(q.v1)}"></div>
+  <div id="dvV2W"><label>Maximum</label><input type="text" id="dvV2" value="${esc(q.v2)}"></div>
+  <div id="dvLsW" style="font-size:11px;color:#666">List: type items separated by commas (Yes,No,Maybe) or a range such as =$A$1:$A$10 or =Sheet2!A1:A8. Custom: a formula for the first cell, e.g. =A1&gt;10.</div>
+  <label><input type="checkbox" id="dvBl" ${q.blank === false ? '' : 'checked'}> Ignore blank</label>
+  <label id="dvDrW"><input type="checkbox" id="dvDr" ${q.drop === false ? '' : 'checked'}> In-cell dropdown</label>
+  <hr><label><input type="checkbox" id="dvIm" ${im.on ? 'checked' : ''}> Show input message when cell is selected</label>
+  <input type="text" id="dvIT" placeholder="Title" value="${esc(im.t)}"><input type="text" id="dvIM" placeholder="Input message" value="${esc(im.m)}">
+  <hr><label><input type="checkbox" id="dvEr" ${er.on === false ? '' : 'checked'}> Show error alert after invalid data is entered</label>
+  ${sel1('dvEs', [['stop', 'Stop'], ['warning', 'Warning'], ['information', 'Information']], er.st || 'stop')}
+  <input type="text" id="dvET" placeholder="Error title" value="${esc(er.t)}"><input type="text" id="dvEM" placeholder="Error message" value="${esc(er.m)}">`;
+  gen('Data Validation', h, [['OK', dvApply], ['Clear in selection', dvClear], ['Clear all', () => { sh().dv = []; save(); closeGen(); refresh(); dvUpdate(); }]]);
+  dvSync();
+}
+function dvSync() {
+  const t = $('dvA').value, op = $('dvO').value; const show = (id, on) => { $(id).style.display = on ? '' : 'none'; };
+  const num = ['whole', 'decimal', 'date', 'time', 'length'].includes(t); show('dvOpW', num); show('dvV1W', t !== 'any'); show('dvV2W', num && (op === 'between' || op === 'notBetween')); show('dvLsW', t === 'list' || t === 'custom'); show('dvDrW', t === 'list');
+  $('dvL1').textContent = t === 'list' ? 'Source' : t === 'custom' ? 'Formula' : (op === 'between' || op === 'notBetween') ? 'Minimum' : 'Value';
+}
+function dvApply() {
+  const S = sh(); S.dv = S.dv || []; const t = $('dvA').value;
+  const covered = q => q.r1 >= sel.r1 && q.r2 <= sel.r2 && q.c1 >= sel.c1 && q.c2 <= sel.c2; S.dv = S.dv.filter(q => !covered(q));
+  const rule = { r1: sel.r1, c1: sel.c1, r2: sel.r2, c2: sel.c2, type: t, op: $('dvO').value, v1: $('dvV1').value, v2: $('dvV2').value, blank: $('dvBl').checked, drop: $('dvDr').checked,
+    im: { on: $('dvIm').checked, t: $('dvIT').value, m: $('dvIM').value }, er: { on: $('dvEr').checked, st: $('dvEs').value, t: $('dvET').value, m: $('dvEM').value } };
+  if (t !== 'any' && String(rule.v1).trim() === '') { alert('Enter the ' + ($('dvL1').textContent.toLowerCase()) + ' value first.'); return; }
+  if (t !== 'any' || rule.im.on) S.dv.push(rule); save(); closeGen(); refresh(); dvUpdate();
+}
+function dvClear() {
+  const S = sh(); S.dv = S.dv || []; const inter = q => !(q.r2 < sel.r1 || q.r1 > sel.r2 || q.c2 < sel.c1 || q.c1 > sel.c2); const cov = q => q.r1 >= sel.r1 && q.r2 <= sel.r2 && q.c1 >= sel.c1 && q.c2 <= sel.c2;
+  const part = S.dv.some(q => inter(q) && !cov(q)); S.dv = S.dv.filter(q => !cov(q)); if (part) S.dv.push({ r1: sel.r1, c1: sel.c1, r2: sel.r2, c2: sel.c2, type: 'any', op: 'between', v1: '', v2: '', blank: true });
+  save(); closeGen(); refresh(); dvUpdate();
+}
