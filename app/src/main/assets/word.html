@@ -39,7 +39,7 @@ body.fitw .hf,body.fitw #body{padding-left:14px!important;padding-right:14px!imp
 <div id="desk"><div id="paper"><div id="hdr" class="hf" contenteditable="true" data-ph="Header"></div><div id="body" contenteditable="true" spellcheck="true"><p><br></p></div><div id="ftr" class="hf" contenteditable="true" data-ph="Footer"></div></div></div>
 <div id="status"><span id="stL">Page 1 of 1</span><span id="stR">0 words</span><span class="sp"></span><span class="vw"><b class="on" onclick="viewMode('print')" title="Print Layout">&#9636;</b><b onclick="viewMode('reflow')" title="Reflow">&#9776;</b></span><span class="zm"><button onclick="zoomStep(-10)">&minus;</button><input type="range" id="zs" min="40" max="200" value="100" oninput="setZ(this.value/100)"><button onclick="zoomStep(10)">+</button><span id="zp" onclick="setZ(1)">100%</span></span></div>
 <div class="modal" id="mG"><div class="box"><h3 id="gT"></h3><div id="gB"></div><div class="row" id="gR"></div></div></div>
-<script src="libs/jszip.min.js"></script><script src="libs/mammoth.browser.min.js"></script><script src="common.js"></script><script src="docxlib.js"></script><script src="docx2.js"></script><script src="picbar.js"></script><script src="wordx.js" defer></script>
+<script src="libs/jszip.min.js"></script><script src="libs/mammoth.browser.min.js"></script><script src="common.js"></script><script src="docxlib.js"></script><script src="docx2.js"></script><script src="picbar.js"></script><script src="ribfit.js"></script><script src="wordx.js" defer></script>
 <script>
 const $=id=>document.getElementById(id);let name='Document1',pg={w:12240,h:15840},lastSel=null;
 document.execCommand('styleWithCSS',false,true);

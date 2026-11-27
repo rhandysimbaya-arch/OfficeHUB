@@ -494,7 +494,7 @@ function init(){load();
 window.__back=()=>{if($('mRun').style.display==='flex'){closeRun();return}for(const id of ['mGen','mUF','mVba']){if($(id).style.display==='flex'){$(id).style.display='none';return}}RB.home()};
 init();
 </script>
-<script src="picbar.js"></script><script src="sheetx.js"></script><script src="sheety.js"></script><script src="sheetz.js"></script><script src="sheetc.js"></script><script src="sheetw.js"></script><script src="sheetq.js"></script>
+<script src="picbar.js"></script><script src="ribfit.js"></script><script src="sheetx.js"></script><script src="sheety.js"></script><script src="sheetz.js"></script><script src="sheetc.js"></script><script src="sheetw.js"></script><script src="sheetq.js"></script>
 <script>function cellsMenu(v){({insr:()=>insRC('r'),insc:()=>insRC('c'),delr:()=>delRC('r'),delc:()=>delRC('c'),rh:rowHeightDlg,cw:colWidthDlg,afr:()=>autoFitRow(),afc:autoFitCol,hr:()=>hideRC('r'),hc:()=>hideRC('c'),ur:()=>unhideRC('r'),uc:()=>unhideRC('c'),rs:resetSizes,fc:formatCellsDlg})[v]();}
 function sfMenu(v){({asc:()=>sortSel(1),desc:()=>sortSel(-1),flt:filterDlg,clr:clearFilter})[v]&&({asc:()=>sortSel(1),desc:()=>sortSel(-1),flt:filterDlg,clr:clearFilter})[v]();}
 function fsMenu(v){({find:findRep,rep:findRep,goto:()=>gotoDlg(),special:()=>gotoDlg(),all:selectAll})[v]&&({find:findRep,rep:findRep,goto:()=>gotoDlg(),special:()=>gotoDlg(),all:selectAll})[v]();}</script></body></html>
