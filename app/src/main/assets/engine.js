@@ -209,8 +209,8 @@
     }
     // display value (computed)
     value(sheet, r, c) { try { return this.getVal(sheet, r, c); } catch (e) { return isErr(e) ? e : E('#VALUE!'); } }
-    toJSON() { const o = { order: this.order, sheets: {} }; for (const n of this.order) { const sh = this.sheets[n]; const cells = {}; for (const k in sh.cells) { const c = sh.cells[k]; cells[k] = c.f ? c.f : c.v; } o.sheets[n] = { cells, fmt: sh.fmt, style: sh.style, colW: sh.colW, rowH: sh.rowH, merges: sh.merges || [], defSz: sh.defSz, defFont: sh.defFont, grid: sh.grid }; } return o; }
-    static fromJSON(o) { const wb = new Workbook(); wb.sheets = {}; wb.order = []; for (const n of o.order) { const sh = wb.addSheet(n); const s = o.sheets[n]; for (const k in s.cells) { const v = s.cells[k]; sh.cells[k] = (typeof v === 'string' && v[0] === '=') ? { f: v } : { v }; } sh.fmt = s.fmt || {}; sh.style = s.style || {}; sh.colW = s.colW || {}; sh.rowH = s.rowH || {}; sh.merges = s.merges || []; sh.defSz = s.defSz; sh.defFont = s.defFont; sh.grid = s.grid; } if (!wb.order.length) wb.addSheet('Sheet1'); return wb; }
+    toJSON() { const o = { order: this.order, sheets: {} }; for (const n of this.order) { const sh = this.sheets[n]; const cells = {}; for (const k in sh.cells) { const c = sh.cells[k]; cells[k] = c.f ? c.f : c.v; } o.sheets[n] = { cells, fmt: sh.fmt, style: sh.style, colW: sh.colW, rowH: sh.rowH, merges: sh.merges || [], cf: sh.cf || [], frz: sh.frz || null, hid: sh.hid || {}, flt: sh.flt || {}, defSz: sh.defSz, defFont: sh.defFont, grid: sh.grid }; } return o; }
+    static fromJSON(o) { const wb = new Workbook(); wb.sheets = {}; wb.order = []; for (const n of o.order) { const sh = wb.addSheet(n); const s = o.sheets[n]; for (const k in s.cells) { const v = s.cells[k]; sh.cells[k] = (typeof v === 'string' && v[0] === '=') ? { f: v } : { v }; } sh.fmt = s.fmt || {}; sh.style = s.style || {}; sh.colW = s.colW || {}; sh.rowH = s.rowH || {}; sh.merges = s.merges || []; sh.cf = s.cf || []; sh.frz = s.frz || null; sh.hid = s.hid || {}; sh.flt = s.flt || {}; sh.defSz = s.defSz; sh.defFont = s.defFont; sh.grid = s.grid; } if (!wb.order.length) wb.addSheet('Sheet1'); return wb; }
   }
 
   // ---------- evaluation ----------
@@ -277,6 +277,11 @@
     if (!fmt || fmt === 'General') return numStr(Math.abs(v) >= 1e11 || (Math.abs(v) < 1e-9 && v !== 0) ? +v.toPrecision(10) : +v.toPrecision(12) + 0);
     const parts = fmt.split(';'); let f = parts[0]; let val = v;
     if (parts.length > 1 && v < 0) { f = parts[1]; val = -v; } else if (parts.length > 2 && v === 0) { f = parts[2]; }
+    f = f.replace(/\[\$[^\]]*\]/g, '').replace(/\[(Red|Blue|Green|Black|White|Yellow|Magenta|Cyan|Color\d+)\]/gi, '');
+    if (f === '@') return String(v);
+    if (/0E[+-]0+/i.test(f)) { const dec = ((/\.([0#]+)E/i.exec(f) || [, ''])[1]).length; if (val === 0) return (0).toFixed(dec) + 'E+00'; let ex = Math.floor(Math.log10(Math.abs(val))); let mt = val / Math.pow(10, ex); if (+Math.abs(mt).toFixed(dec) >= 10) { mt /= 10; ex++; } return (v < 0 && parts.length < 2 ? '-' : '') + Math.abs(mt).toFixed(dec) + 'E' + (ex < 0 ? '-' : '+') + String(Math.abs(ex)).padStart(2, '0'); }
+    const fr = /(\?+)\/(\?+|\d+)/.exec(f);
+    if (fr) { const ad = Math.abs(val); let wh = Math.floor(ad), rem = ad - wh; const maxD = /^\d+$/.test(fr[2]) ? +fr[2] : Math.pow(10, fr[2].length) - 1; let bn = 0, bd = 1, be = rem; for (let d = 1; d <= maxD; d++) { const n = Math.round(rem * d); const e = Math.abs(rem - n / d); if (e < be - 1e-12) { be = e; bn = n; bd = d; } } if (bn === bd) { wh++; bn = 0; } const sg = v < 0 && parts.length < 2 ? '-' : ''; return sg + (bn === 0 ? String(wh) : (wh ? wh + ' ' : '') + bn + '/' + bd); }
     const clean = f.replace(/"[^"]*"/g, '').replace(/\\./g, '').replace(/\[[^\]]*\]/g, '');
     if (/[ymdhs]/i.test(clean) && !/^[#0,.\s%$-]*$/.test(clean) && !/[#0]/.test(clean.replace(/[ymdhs]/gi, ''))) return fmtDate(val, f);
     // numeric

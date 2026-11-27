@@ -86,9 +86,18 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        web.evaluateJavascript("window.__back ? window.__back() : false", v -> {
-            if (!"true".equals(v)) {
-                if (web.canGoBack()) web.goBack(); else finish();
+        // Module pages: let the page close its own dialogs first, otherwise go to the main menu.
+        // Main menu: ask whether to close the app.
+        web.evaluateJavascript("(function(){if(window.__back){window.__back();return 'page';}return 'none';})()", v -> {
+            if ("\"page\"".equals(v)) return;
+            String url = web.getUrl();
+            if (url != null && url.contains("index.html")) {
+                new android.app.AlertDialog.Builder(MainActivity.this).setTitle("Office HUB")
+                    .setMessage("Close the app?")
+                    .setPositiveButton("Close", (d, w) -> finish())
+                    .setNegativeButton("Stay", null).show();
+            } else {
+                web.loadUrl("file:///android_asset/index.html");
             }
         });
     }

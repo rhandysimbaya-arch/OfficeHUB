@@ -17,7 +17,7 @@ body{display:flex;flex-direction:column;height:100%}
 .fbar b{color:#217346;font-style:italic}
 #fguide{display:none;background:#fffbe6;border-bottom:1px solid #e0d68a;padding:4px 8px;font-size:13px;flex:0 0 auto;max-height:84px;overflow:auto}#fguide .sig{font-family:Consolas,monospace;word-break:break-word}#fguide .sig b{color:#000;background:#ffe58f;padding:0 2px;border-radius:2px}#fguide .sig u{text-decoration:none;color:#555}#fguide .ch{display:inline-block;margin:3px 4px 0 0;padding:3px 8px;background:#fff;border:1px solid #cbb;border-radius:12px;font-size:12px}#rngBtn.on{background:#cfe8d9!important}
 #wrap{flex:1;overflow:auto;position:relative;background:#fff;-webkit-overflow-scrolling:touch}
-table.g{border-collapse:collapse;table-layout:fixed;font-size:13px}
+table.g{border-collapse:collapse;table-layout:fixed;font-size:14.67px}
 .g td,.g th{border:1px solid #d4d4d4;height:28px;padding:0 4px;overflow:hidden;white-space:nowrap;text-overflow:clip;max-width:0}
 .g th{background:#f0f0f0;color:#555;font-weight:500;position:sticky;top:0;z-index:3;text-align:center;font-size:12px}
 .g th.rh{left:0;z-index:4;position:sticky;width:38px;max-width:38px}
@@ -58,14 +58,29 @@ table.g.nogrid td{border-color:#fff}
 <div class="tabsrow" id="rtabs"></div>
 <div class="rib" id="rib">
 <div class="tb on" data-t="Home">
- <select id="fontName" onchange="sty('font',this.value)"><option>Calibri</option><option>Arial</option><option>Times New Roman</option><option>Courier New</option><option>Verdana</option></select>
- <select id="fontSz" onchange="sty('sz',+this.value)"><option>8</option><option>9</option><option>10</option><option selected>11</option><option>12</option><option>14</option><option>16</option><option>18</option><option>20</option><option>24</option></select>
- <button onclick="tog('b')"><b>B</b></button><button onclick="tog('i')"><i>I</i></button><button onclick="tog('u')"><u>U</u></button><span class="sep"></span>
- <input type="color" value="#ffff00" onchange="sty('bg',this.value)" title="Fill"><input type="color" value="#000000" onchange="sty('color',this.value)" title="Font color"><span class="sep"></span>
- <button onclick="sty('align','left')">&#8676;</button><button onclick="sty('align','center')">&#8596;</button><button onclick="sty('align','right')">&#8677;</button><button onclick="sty('bd',1)">&#9638;</button><span class="sep"></span>
- <select id="nf" onchange="nfmt(this.value)"><option value="">General</option><option value="0">Number</option><option value="#,##0.00">Comma 0.00</option><option value="$#,##0.00">Currency</option><option value="0%">Percent</option><option value="0.00%">Percent 0.00</option><option value="yyyy-mm-dd">Date</option><option value="mmm d, yyyy">Date long</option><option value="h:mm AM/PM">Time</option></select>
- <button onclick="decs(1)">.0&rarr;</button><button onclick="decs(-1)">&larr;.0</button><span class="sep"></span>
- <button onclick="autosum()">&Sigma;</button><button onclick="copy(false)">Copy</button><button onclick="copy(true)">Cut</button><button onclick="paste()">Paste</button><button onclick="fill('d')">Fill&darr;</button><button onclick="fill('r')">Fill&rarr;</button><button onclick="clearSel()">Clear</button>
+ <button onclick="undo()" title="Undo (Ctrl+Z)">&#8630;</button><button onclick="redo()" title="Redo (Ctrl+Y)">&#8631;</button><span class="sep"></span>
+ <select onchange="pasteSpecial(this.value);resetSel(this)"><option>Paste &#9662;</option><option value="all">Paste</option><option value="values">Values only</option><option value="formulas">Formulas</option><option value="formats">Formatting</option><option value="transpose">Transpose</option></select>
+ <button onclick="copy(false)">Copy</button><button onclick="copy(true)">Cut</button><button onclick="painter()" title="Format Painter">Painter</button><span class="sep"></span>
+ <select id="fontName" onchange="sty('font',this.value)"><option>Calibri</option><option>Arial</option><option>Times New Roman</option><option>Courier New</option><option>Verdana</option><option>Georgia</option><option>Tahoma</option><option>Candara</option><option>Segoe UI</option><option>Comic Sans MS</option><option>Trebuchet MS</option><option>Impact</option><option>Cambria</option><option>Consolas</option></select>
+ <select id="fontSz" onchange="szPt(this.value)"><option>8</option><option>9</option><option>10</option><option selected>11</option><option>12</option><option>14</option><option>16</option><option>18</option><option>20</option><option>22</option><option>24</option><option>26</option><option>28</option><option>36</option><option>48</option><option>72</option></select>
+ <button onclick="fontStep(1)" title="Increase font size">A&#9650;</button><button onclick="fontStep(-1)" title="Decrease font size">A&#9660;</button><span class="sep"></span>
+ <button onclick="tog('b')" title="Bold (Ctrl+B)"><b>B</b></button><button onclick="tog('i')" title="Italic (Ctrl+I)"><i>I</i></button><button onclick="tog('u')" title="Underline (Ctrl+U)"><u>U</u></button><button onclick="tog('s')" title="Strikethrough (Ctrl+5)"><s>S</s></button><span class="sep"></span>
+ <input type="color" value="#ffff00" onchange="sty('bg',this.value)" title="Fill color"><button onclick="noFill()" title="No fill">No fill</button><input type="color" value="#ff0000" onchange="sty('color',this.value)" title="Font color"><button onclick="sty('color',undefined)" title="Automatic font color">Auto</button><span class="sep"></span>
+ <button onclick="setValign('top')" title="Align top">Top</button><button onclick="setValign('middle')" title="Align middle">Mid</button><button onclick="setValign('bottom')" title="Align bottom">Bot</button><span class="sep"></span>
+ <button onclick="sty('align','left')" title="Align left">&#8676;</button><button onclick="sty('align','center')" title="Center">&#8596;</button><button onclick="sty('align','right')" title="Align right">&#8677;</button>
+ <button onclick="indentBy(-1)" title="Decrease indent">&#9664;&#8801;</button><button onclick="indentBy(1)" title="Increase indent">&#8801;&#9654;</button>
+ <button onclick="wrapToggle()" id="wrapBtn" title="Wrap Text"><b>Wrap Text</b></button>
+ <select onchange="mergeSel(this.value);resetSel(this)"><option>Merge &#9662;</option><option value="center">Merge &amp; Center</option><option value="merge">Merge Cells</option><option value="across">Merge Across</option><option value="unmerge">Unmerge Cells</option></select><span class="sep"></span>
+ <select onchange="bordersSel(this.value);resetSel(this)" title="Borders"><option>Borders &#9662;</option><option value="all">All borders</option><option value="outside">Outside borders</option><option value="thick">Thick outside border</option><option value="inside">Inside borders</option><option value="top">Top border</option><option value="bottom">Bottom border</option><option value="left">Left border</option><option value="right">Right border</option><option value="dbl">Double bottom border</option><option value="topbottom">Top and double bottom</option><option value="none">No border</option></select>
+ <select id="bdSt" title="Line style"><option value="1px solid">Thin</option><option value="2px solid">Medium</option><option value="3px solid">Thick</option><option value="1px dashed">Dashed</option><option value="1px dotted">Dotted</option><option value="3px double">Double</option></select><input type="color" id="bdCol" value="#000000" title="Border color"><span class="sep"></span>
+ <select id="nf" onchange="nfmt(this.value)"><option value="">General</option><option value="0">Number (0)</option><option value="0.00">Number (0.00)</option><option value="#,##0">Comma (0)</option><option value="#,##0.00">Comma (0.00)</option><option value="$#,##0.00">Currency</option><option value="_($* #,##0.00_)">Accounting</option><option value="m/d/yyyy">Short Date</option><option value="mmmm d, yyyy">Long Date</option><option value="yyyy-mm-dd">Date yyyy-mm-dd</option><option value="d-mmm-yy">Date d-mmm-yy</option><option value="h:mm AM/PM">Time</option><option value="h:mm:ss">Time 24h</option><option value="0%">Percentage</option><option value="0.00%">Percentage 0.00</option><option value="# ?/?">Fraction</option><option value="0.00E+00">Scientific</option><option value="@">Text</option></select>
+ <button onclick="nfmt('$#,##0.00')" title="Currency">$</button><button onclick="nfmt('0%')" title="Percent">%</button><button onclick="nfmt('#,##0.00')" title="Comma style">,</button><button onclick="decs(1)" title="Increase decimal">.0&rarr;</button><button onclick="decs(-1)" title="Decrease decimal">&larr;.0</button><button onclick="formatCellsDlg()" title="Format Cells (Ctrl+1)">Format&hellip;</button><span class="sep"></span>
+ <button onclick="cfDlg()">Cond. Format</button><button onclick="fmtTable()">Format as Table</button>
+ <select onchange="cellStyle(this.value);resetSel(this)"><option>Cell Styles &#9662;</option><option value="normal">Normal</option><option value="good">Good</option><option value="bad">Bad</option><option value="neutral">Neutral</option><option value="title">Title</option><option value="h1">Heading 1</option><option value="h2">Heading 2</option><option value="total">Total</option><option value="input">Input</option><option value="note">Note</option><option value="accent">Accent 1</option><option value="accent2">Accent 2</option><option value="dark">Dark header</option></select><span class="sep"></span>
+ <select onchange="cellsMenu(this.value);resetSel(this)"><option>Cells &#9662;</option><option value="insr">Insert row</option><option value="insc">Insert column</option><option value="delr">Delete row</option><option value="delc">Delete column</option><option value="rh">Row height&hellip;</option><option value="cw">Column width&hellip;</option><option value="afr">AutoFit row height</option><option value="afc">AutoFit column width</option><option value="hr">Hide rows</option><option value="hc">Hide columns</option><option value="ur">Unhide rows</option><option value="uc">Unhide columns</option><option value="rs">Reset size</option></select><span class="sep"></span>
+ <button onclick="autosum()" title="AutoSum (Alt+=)">&Sigma;</button><button onclick="fill('d')" title="Fill down (Ctrl+D)">Fill&darr;</button><button onclick="fill('r')" title="Fill right (Ctrl+R)">Fill&rarr;</button>
+ <select onchange="clearMenu(this.value);resetSel(this)"><option>Clear &#9662;</option><option value="all">Clear All</option><option value="formats">Clear Formats</option><option value="contents">Clear Contents</option></select>
+ <button onclick="sortSel(1)">Sort A&rarr;Z</button><button onclick="sortSel(-1)">Z&rarr;A</button><button onclick="filterDlg()">Filter</button><button onclick="findRep()" title="Find &amp; Replace (Ctrl+F)">Find</button><button onclick="selectAll()">Select all</button>
 </div>
 <div class="tb" data-t="Insert">
  <button onclick="insRC('r')">+Row</button><button onclick="insRC('c')">+Col</button><button onclick="delRC('r')">-Row</button><button onclick="delRC('c')">-Col</button><span class="sep"></span>
@@ -80,6 +95,12 @@ table.g.nogrid td{border-color:#fff}
 <div class="tb" data-t="Data">
  <button onclick="sortSel(1)">Sort A&rarr;Z</button><button onclick="sortSel(-1)">Sort Z&rarr;A</button><button onclick="dedupe()">Remove duplicates</button><button onclick="findRep()">Find &amp; Replace</button><span class="sep"></span>
  <button onclick="goalSeek()">Goal Seek</button><button onclick="scenarioMgr()">Scenario Manager</button><button onclick="dataTable()">Data Table</button>
+</div>
+<div class="tb" data-t="View">
+ <select onchange="freezeMenu(this.value);resetSel(this)"><option>Freeze Panes &#9662;</option><option value="at">Freeze at selected cell</option><option value="row">Freeze top row</option><option value="col">Freeze first column</option><option value="none">Unfreeze</option></select>
+ <button onclick="toggleGrid()">Gridlines</button><button onclick="toggleShowF()">Show Formulas</button><span class="sep"></span>
+ <button onclick="zoomBy(-0.1)">Zoom &minus;</button><button onclick="setZoom(1)">100%</button><button onclick="zoomBy(0.1)">Zoom +</button><button onclick="fitZoom()">Fit width</button><span class="sep"></span>
+ <button onclick="textToCols()">Text to Columns</button><button onclick="shortcutsHelp()">Keyboard shortcuts</button>
 </div>
 <div class="tb" data-t="Developer">
  <button onclick="vbaEditor()">Visual Basic</button><button onclick="runMacroDlg()">&#9654; Macros</button><button onclick="toggleDesign()" id="dsgBtn">Design mode</button><button onclick="addButton()">Insert Button</button><button onclick="addImage()">Insert Picture</button><button onclick="assignMacro()">Assign Macro</button><button onclick="delShape()">Delete shape</button><span class="sep"></span>
@@ -149,16 +170,17 @@ function paint(r,c){
   const td=tds[r]&&tds[r][c];if(!td)return;const k=key(r,c),mm=MM[k];
   if(mm==='h'){td.style.cssText='display:none';td.className='';return;}
   if(mm){if(td.colSpan!==mm.cs)td.colSpan=mm.cs;if(td.rowSpan!==mm.rs)td.rowSpan=mm.rs;}else{if(td.colSpan!==1)td.colSpan=1;if(td.rowSpan!==1)td.rowSpan=1;}
-  const S=sh(),imp=S.defSz!==undefined,v=wb.value(cur,r,c),txt=cellText(r,c),st=styleOf(r,c);
+  const S=sh(),imp=S.defSz!==undefined,v=wb.value(cur,r,c),txt=cellText(r,c);let st=styleOf(r,c);if(window.xCF)st=xCF(r,c,st,v);
   const isNum=typeof v==='number'&&!showF, isErr=E.isErr(v);
   let al=st&&st.align||(isNum?'right':(typeof v==='boolean'||isErr)?'center':'left');
   let css='text-align:'+al+';height:'+rowHt(r)+'px;vertical-align:'+((st&&st.valign)||(imp?'bottom':'middle'))+';';
   const fs=(st&&st.sz)||S.defSz;if(fs)css+='font-size:'+fs+'px;';
   const fam=(st&&st.font)||S.defFont;if(fam)css+='font-family:'+famCss(fam)+';';
-  if(st){if(st.b)css+='font-weight:700;';if(st.i)css+='font-style:italic;';if(st.u)css+='text-decoration:underline;';if(st.color)css+='color:'+st.color+';';if(st.bg)css+='background:'+st.bg+';';if(st.bd)css+='border:1px solid #000;';
+  if(st){if(st.b)css+='font-weight:700;';if(st.i)css+='font-style:italic;';if(st.u||st.s)css+='text-decoration:'+(st.u?'underline ':'')+(st.s?'line-through':'')+';';if(st.color)css+='color:'+st.color+';';if(st.bg)css+='background:'+st.bg+';';if(st.bd)css+='border:1px solid #000;';
     if(st.wrap)css+='white-space:normal;word-break:break-word;line-height:1.15;';
     if(st.indent)css+='padding-left:'+(4+st.indent*9)+'px;';
     if(st.bt)css+='border-top:'+st.bt+';';if(st.bb)css+='border-bottom:'+st.bb+';';if(st.bl)css+='border-left:'+st.bl+';';if(st.br)css+='border-right:'+st.br+';';}
+  if(window.xFrz)css+=xFrz(r,c);
   td.style.cssText=css;td.textContent=txt;
   if(imp&&txt&&typeof v==='string'&&!showF&&!(st&&st.wrap)&&(al==='left'||al==='right'))spill(td,r,c,txt,al,st,fs);
   td.className=(r>=sel.r1&&r<=sel.r2&&c>=sel.c1&&c<=sel.c2?'sel':'')+(r===anchor.r&&c===anchor.c?' cur':'');
@@ -171,7 +193,7 @@ function paintHeaders(){document.querySelectorAll('.g th.hs').forEach(e=>e.class
 function addrOf(s){return s.r1===s.r2&&s.c1===s.c2?E.addr(s.r1,s.c1):E.addr(s.r1,s.c1)+':'+E.addr(s.r2,s.c2)}
 function updateFx(){
   $('nm').value=addrOf(sel);if(!editing)$('fx').value=String(wb.getRaw(cur,anchor.r,anchor.c));
-  const st=styleOf(anchor.r,anchor.c)||{};$('fontSz').value=st.sz||11;$('fontName').value=st.font||'Calibri';$('nf').value=sh().fmt[key(anchor.r,anchor.c)]||'';
+  const st=styleOf(anchor.r,anchor.c)||{};{const pt=Math.round((st.sz||sh().defSz||14.67)*0.75),fn=st.font||sh().defFont||'Calibri';for(const [id,v] of [['fontSz',pt],['fontName',fn]]){const el=$(id);if(![...el.options].some(o=>o.value==v||o.text==v)){const o=document.createElement('option');o.textContent=v;el.appendChild(o);}el.value=v;}$('wrapBtn').classList.toggle('act',!!st.wrap);}$('nf').value=sh().fmt[key(anchor.r,anchor.c)]||'';
   const nums=[];for(let r=sel.r1;r<=sel.r2&&r<=ROWS;r++)for(let c=sel.c1;c<=sel.c2&&c<=COLS;c++){const v=wb.value(cur,r,c);if(typeof v==='number')nums.push(v);}
   $('stR').textContent=nums.length>1?`Sum: ${E.numStr(+nums.reduce((a,b)=>a+b,0).toPrecision(12))}  Avg: ${E.numStr(+(nums.reduce((a,b)=>a+b,0)/nums.length).toPrecision(8))}  Count: ${nums.length}`:'';
 }
@@ -190,7 +212,7 @@ function updRngBtn(){$('rngBtn').classList.toggle('on',extendMode);$('stL').text
 function toggleRange(){extendMode=!extendMode;updRngBtn();}
 function gotoName(t){t=t.trim().toUpperCase();const nm=book.names[t];if(nm)t=nm;const m=/^([A-Z]+)(\d+)(?::([A-Z]+)(\d+))?$/.exec(t);if(!m)return;const c1=E.colToNum(m[1]),r1=+m[2],c2=m[3]?E.colToNum(m[3]):c1,r2=m[4]?+m[4]:r1;const prev=sel;anchor={r:r1,c:c1};sel={r1:Math.min(r1,r2),c1:Math.min(c1,c2),r2:Math.max(r1,r2),c2:Math.max(c1,c2)};paintSel(prev);const td=tds[r1]&&tds[r1][c1];if(td)td.scrollIntoView({block:'center',inline:'center'});}
 /* ---------- editing ---------- */
-function fxKey(e){if(e.key==='Enter'){e.preventDefault();commitFx(true);}else if(e.key==='Escape'){cancelEdit();}}
+function fxKey(e){if(e.key==='Enter'){if(e.ctrlKey||e.metaKey)return;e.preventDefault();commitFx(e.shiftKey?-1:1);}else if(e.key==='Escape'){cancelEdit();}else if(e.key==='Tab'){e.preventDefault();commitFx(0);goCell(anchor.r,anchor.c+(e.shiftKey?-1:1));}else if(e.key==='F4'){e.preventDefault();cycleAbs();}}
 function fxFocus(){if(!editing){editing=true;editCell={sheet:cur,r:anchor.r,c:anchor.c};pointRef=null;}guide();}
 function fxInput(){const f=$('fx');if(pointRef&&f.selectionStart!==pointRef.end)pointRef=null;guide();}
 function backToEditSheet(){if(editCell&&editCell.sheet!==cur&&wb.sheets[editCell.sheet]){cur=editCell.sheet;renderTabs();build();}}
@@ -198,7 +220,7 @@ function cancelEdit(){editing=false;pointRef=null;$('fx').blur();backToEditSheet
 function commitIfEditing(){if(editing)commitFx();editing=false;}
 function commitFx(move){if(!editing&&!editCell){return;}const ec=editCell||{sheet:cur,r:anchor.r,c:anchor.c};const v=$('fx').value;editing=false;pointRef=null;extendMode=false;updRngBtn();$('fx').blur();hideGuide();backToEditSheet();
   const prev=Object.assign({},sel);anchor={r:ec.r,c:ec.c};sel={r1:ec.r,c1:ec.c,r2:ec.r,c2:ec.c};setCell(ec.sheet,ec.r,ec.c,v);
-  if(move){anchor={r:Math.min(ROWS,ec.r+1),c:ec.c};sel={r1:anchor.r,c1:anchor.c,r2:anchor.r,c2:anchor.c};}paintSel(prev);}
+  if(move){anchor={r:Math.max(1,Math.min(ROWS,ec.r+(+move))),c:ec.c};sel={r1:anchor.r,c1:anchor.c,r2:anchor.r,c2:anchor.c};}paintSel(prev);}
 /* ----- point mode: tap/drag cells while typing a formula ----- */
 function canPoint(){const f=$('fx'),v=f.value;if(v[0]!=='=')return false;const p=f.selectionStart==null?v.length:f.selectionStart;if(pointRef&&p===pointRef.end)return true;return /[=(,;+\-*\/^&<>:{ ]$/.test(v.slice(0,p));}
 function refText(r,c){return E.addr(r,c)}
@@ -276,7 +298,7 @@ function toggleShowF(){showF=!showF;refresh();}
 function doRecalc(m){refresh();}
 /* ---------- tabs / ribbons ---------- */
 function renderTabs(){
-  $('rtabs').innerHTML=['Home','Insert','Formulas','Data','Developer'].map((t,i)=>`<div class="${i===0?'on':''}" onclick="ribTab('${t}',this)">${t}</div>`).join('');
+  $('rtabs').innerHTML=['Home','Insert','Formulas','Data','View','Developer'].map((t,i)=>`<div class="${i===0?'on':''}" onclick="ribTab('${t}',this)">${t}</div>`).join('');
   $('stabs').innerHTML=wb.order.map(n=>`<div class="${n===cur?'on':''}" onclick="gotoSheet('${n.replace(/'/g,"\\'")}')" ondblclick="renSheet('${n.replace(/'/g,"\\'")}')">${n}</div>`).join('')+'<div onclick="addSheet()" style="font-weight:700">+</div>';
 }
 function ribTab(t,el){document.querySelectorAll('#rtabs div').forEach(d=>d.classList.remove('on'));el.classList.add('on');document.querySelectorAll('.rib .tb').forEach(b=>b.classList.toggle('on',b.dataset.t===t));}
@@ -496,8 +518,9 @@ function init(){load();
   try{const imp=localStorage.getItem('hub_import_sheet');if(imp){localStorage.removeItem('hub_import_sheet');const o=JSON.parse(imp);const list=o.sheets||[{name:o.name||'Imported',rows:o.rows||o}];wb=new E.Workbook();wb.sheets={};wb.order=[];list.forEach(sd=>{const nm=String(sd.name||'Sheet').slice(0,31);wb.addSheet(nm);sd.rows.forEach((row,i)=>row.forEach((v,j)=>{if(v!==null&&v!==''&&v!==undefined)wb.setRaw(nm,i+1,j+1,typeof v==='number'?v:String(v))}));});const nm=wb.order[0];cur=nm;book.name=nm;}}catch(e){}
   $('ttl').textContent=book.name+' - Excel';renderTabs();build();
   const rt=getRT();loadMacros();if(rt.hasProc('Workbook_Open'))try{rt.run('Workbook_Open',[])}catch(e){showErr(e)}
-  document.addEventListener('keydown',e=>{if(document.activeElement===$('fx')||/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;if(e.ctrlKey&&e.key==='c')copy(false);else if(e.ctrlKey&&e.key==='x')copy(true);else if(e.ctrlKey&&e.key==='v')paste();else if(e.key==='Delete')clearSel();else if(e.key.startsWith('Arrow')){const prev=Object.assign({},sel);const d={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1]}[e.key];anchor={r:Math.min(ROWS,Math.max(1,anchor.r+d[0])),c:Math.min(COLS,Math.max(1,anchor.c+d[1]))};sel={r1:anchor.r,c1:anchor.c,r2:anchor.r,c2:anchor.c};paintSel(prev);e.preventDefault();}else if(e.key.length===1&&!e.ctrlKey){$('fx').value=e.key;$('fx').focus();editing=true;e.preventDefault();}});
 }
 window.__back=()=>{if($('mRun').style.display==='flex'){closeRun();return}for(const id of ['mGen','mUF','mVba']){if($(id).style.display==='flex'){$(id).style.display='none';return}}RB.home()};
 init();
-</script></body></html>
+</script>
+<script src="sheetx.js"></script>
+<script>function cellsMenu(v){({insr:()=>insRC('r'),insc:()=>insRC('c'),delr:()=>delRC('r'),delc:()=>delRC('c'),rh:rowHeightDlg,cw:colWidthDlg,afr:()=>autoFitRow(),afc:autoFitCol,hr:()=>hideRC('r'),hc:()=>hideRC('c'),ur:()=>unhideRC('r'),uc:()=>unhideRC('c'),rs:resetSizes})[v]();}</script></body></html>
