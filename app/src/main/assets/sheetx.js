@@ -252,7 +252,7 @@ function cycleAbs() {
   const order = [[1, 1], [0, 1], [1, 0], [0, 0]]; const idx = order.findIndex(o => o[0] === (mm[1] ? 1 : 0) && o[1] === (mm[3] ? 1 : 0)); const o = order[(idx + 1) % 4];
   const rep = (o[0] ? '$' : '') + mm[2] + (o[1] ? '$' : '') + mm[4]; f.value = v.slice(0, hit.index) + rep + v.slice(hit.index + hit[0].length); const np = hit.index + rep.length; f.setSelectionRange(np, np); guide();
 }
-function tsvOfSel() { const rows = []; for (let r = sel.r1; r <= Math.min(sel.r2, ROWS); r++) { const row = []; for (let c = sel.c1; c <= Math.min(sel.c2, COLS); c++) row.push(cellText(r, c)); rows.push(row.join('\t')); } return rows.join('\n'); }
+function tsvOfSel() { const rows = []; for (let r = sel.r1; r <= Math.min(sel.r2, ROWS); r++) { if (visOnly && sh().rowH[r] === 0) continue; const row = []; for (let c = sel.c1; c <= Math.min(sel.c2, COLS); c++) { if (visOnly && sh().colW[c] === 0) continue; row.push(cellText(r, c)); } rows.push(row.join('\t')); } visOnly = false; return rows.join('\n'); }
 function sysCopy(t) { try { const ta = document.createElement('textarea'); ta.value = t; ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); } catch (e) { } try { navigator.clipboard && navigator.clipboard.writeText(t); } catch (e) { } }
 const _copy0 = copy;
 copy = function (cut) { _copy0(cut); if (clip) { clip.tsv = tsvOfSel(); sysCopy(clip.tsv); } };
@@ -278,17 +278,139 @@ function modalOpen() { for (const id of ['mGen', 'mUF', 'mVba', 'mRun']) { const
 function insertNow(kind) { const d = new Date(); const ser = Math.floor(E.dateToSerial(d)); if (kind === 'time') { const fr = (d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds()) / 86400; wb.setRaw(cur, anchor.r, anchor.c, ser + fr); sh().fmt[key(anchor.r, anchor.c)] = 'h:mm AM/PM'; } else { wb.setRaw(cur, anchor.r, anchor.c, ser); sh().fmt[key(anchor.r, anchor.c)] = 'm/d/yyyy'; } save(); refresh(); }
 function selectRowCol(mode) { if (mode === 'row') setSel(anchor.r, 1, anchor.r, COLS, anchor.r, anchor.c); else setSel(1, anchor.c, ROWS, anchor.c, anchor.r, anchor.c); }
 function shortcutsHelp() {
-  const L = [['Ctrl+C / X / V', 'Copy / Cut / Paste'], ['Ctrl+Alt+V', 'Paste Special (then V=Values, F=Formulas, T=Formats, E=Transpose)'], ['Ctrl+Shift+V', 'Paste values only'], ['Ctrl+Z / Y', 'Undo / Redo'], ['Ctrl+B / I / U', 'Bold / Italic / Underline'], ['Ctrl+5', 'Strikethrough'], ['Ctrl+A', 'Select all'], ['Ctrl+D / R', 'Fill down / right'], ['Ctrl+F / H', 'Find & Replace'], ['Ctrl+S', 'Save'], ['Ctrl+O', 'Open'], ['Ctrl+1', 'Format Cells'], ['Ctrl+Shift+1 / 2 / 3', 'Number / Time / Date format'], ['Ctrl+Shift+4 / 5', 'Currency / Percent'], ['Ctrl+; / Ctrl+Shift+;', 'Insert date / time'], ['Ctrl++ / Ctrl+-', 'Insert / delete row'], ['Ctrl+9 / Ctrl+0', 'Hide row / column'], ['Ctrl+Arrow', 'Jump to edge of data'], ['Ctrl+Home / End', 'First cell / last used cell'], ['Shift+Arrow', 'Extend selection'], ['Ctrl+Shift+Arrow', 'Extend to edge of data'], ['Ctrl+Space / Shift+Space', 'Select column / row'], ['Tab / Shift+Tab', 'Move right / left'], ['Enter / Shift+Enter', 'Move down / up'], ['Page Up / Down', 'Scroll one screen'], ['F2', 'Edit cell'], ['F4', 'Cycle $ in reference (editing)'], ['F5 / Ctrl+G', 'Go to'], ['Alt+=', 'AutoSum'], ['Ctrl+Enter', 'Fill selection with entry'], ['Delete', 'Clear contents'], ['Esc', 'Cancel']];
+  const L = [['Ctrl+C / X / V', 'Copy / Cut / Paste'], ['Ctrl+Alt+V', 'Paste Special (then V=Values, F=Formulas, T=Formats, E=Transpose)'], ['Ctrl+Shift+V', 'Paste values only'], ['Ctrl+Z / Y', 'Undo / Redo'], ['Ctrl+B / I / U', 'Bold / Italic / Underline'], ['Ctrl+5', 'Strikethrough'], ['Ctrl+A', 'Select all'], ['Ctrl+D / R', 'Fill down / right'], ['Ctrl+F / H', 'Find & Replace'], ['Ctrl+S', 'Save'], ['Ctrl+O', 'Open'], ['Ctrl+1', 'Format Cells'], ['Ctrl+Shift+1 / 2 / 3', 'Number / Time / Date format'], ['Ctrl+Shift+4 / 5', 'Currency / Percent'], ['Ctrl+; / Ctrl+Shift+;', 'Insert date / time'], ['Ctrl++ / Ctrl+-', 'Insert / delete row'], ['Ctrl+9 / Ctrl+0', 'Hide row / column'], ['Ctrl+Arrow', 'Jump to edge of data'], ['Ctrl+Home / End', 'First cell / last used cell'], ['Shift+Arrow', 'Extend selection'], ['Ctrl+Shift+Arrow', 'Extend to edge of data'], ['Ctrl+Space / Shift+Space', 'Select column / row'], ['Tab / Shift+Tab', 'Move right / left'], ['Enter / Shift+Enter', 'Move down / up'], ['Page Up / Down', 'Scroll one screen'], ['F2', 'Edit cell'], ['F4', 'Cycle $ in reference (editing)'], ['F5 / Ctrl+G', 'Go to'], ['Alt+=', 'AutoSum'], ['Ctrl+Enter', 'Fill selection with entry'], ['Delete', 'Clear contents'], ['Esc', 'Cancel'],['Ctrl+PgUp / PgDn','Previous / next sheet'],['Alt+PgUp / PgDn','Move one screen left / right'],['End, then Arrow','End mode: jump to edge of data'],['Ctrl+A (twice)','Select region, then whole sheet'],['Ctrl+Shift+Space / Ctrl+*','Select current region'],['Shift+Home, Ctrl+Shift+Home/End','Extend selection to row start / A1 / last cell'],['Alt+;','Select visible cells only (copy skips hidden)'],['Ctrl+.','Move active cell to next corner'],['Ctrl+Backspace','Scroll to active cell'],["Ctrl+' / Ctrl+\"",'Copy formula / value from cell above'],['Ctrl+E','Flash Fill (give an example first)'],['Ctrl+Shift+& / _','Outline border / remove border'],['Ctrl+Shift+L, Alt+Down','Filter'],['Ctrl+T / Ctrl+L','Format as Table'],['Ctrl+`','Show / hide formulas'],['F9 / Shift+F9','Recalculate'],['Shift+F11 / Alt+Shift+F1','New sheet'],['F11 / Alt+F1','Insert chart from selection'],['F12','Save As'],['Ctrl+P','Print'],['Ctrl+N','New workbook'],['Ctrl+W / Ctrl+F4','Close (back to menu)'],['F1','This help'],['Ctrl+F1','Show / hide ribbon'],['Alt, H/N/P/M/A/W/F','Ribbon KeyTips (switch tabs)'],['Alt,H,A,C/L/R','Center / left / right align'],['Alt,H,W','Wrap text'],['Alt,H,M,C','Merge & center'],['Alt,H,0 / 9','Increase / decrease decimals'],['Alt,H,O,I / A','AutoFit column / row'],['Alt,H,O,W / H','Column width / row height'],['Alt,H,I,R / C','Insert row / column'],['Alt,H,D,R / C','Delete row / column'],['Alt,H,O,R','Rename sheet'],['Alt,H,D,S','Delete sheet'],['Alt,A,S,A / D','Sort ascending / descending'],['Alt,A,M','Remove duplicates'],['Alt,A,E','Text to Columns'],['Alt,W,F,F','Freeze / unfreeze panes']];
   gen('Keyboard shortcuts', '<table style="width:100%;font-size:13px;border-collapse:collapse">' + L.map(x => `<tr><td style="padding:3px 6px;border-bottom:1px solid #eee;white-space:nowrap"><b>${x[0]}</b></td><td style="padding:3px 6px;border-bottom:1px solid #eee">${x[1]}</td></tr>`).join('') + '</table>', []);
 }
+/* ---------------- Excel Keyboard Shortcuts Master Reference additions ---------------- */
+let endMode = false, tipMode = false, tipSeq = '', visOnly = false, ribHidden = false;
+function stMsg(t) { try { $('stL').textContent = t; } catch (e) { } }
+function regionOf(r, c) {
+  let r1 = r, c1 = c, r2 = r, c2 = c, ch = true;
+  while (ch) { ch = false;
+    for (let rr = Math.max(1, r1 - 1); rr <= Math.min(ROWS, r2 + 1); rr++) for (let cc = Math.max(1, c1 - 1); cc <= Math.min(COLS, c2 + 1); cc++) {
+      if ((rr < r1 || rr > r2 || cc < c1 || cc > c2) && nonEmpty(rr, cc)) { r1 = Math.min(r1, rr); r2 = Math.max(r2, rr); c1 = Math.min(c1, cc); c2 = Math.max(c2, cc); ch = true; }
+    } }
+  return { r1, c1, r2, c2 };
+}
+function selRegion() { const g = regionOf(anchor.r, anchor.c); setSel(g.r1, g.c1, g.r2, g.c2); }
+function ctrlA() { const g = regionOf(anchor.r, anchor.c); const same = sel.r1 === g.r1 && sel.c1 === g.c1 && sel.r2 === g.r2 && sel.c2 === g.c2; const single = sel.r1 === sel.r2 && sel.c1 === sel.c2; if (same || (!single && !(g.r1 === g.r2 && g.c1 === g.c2) && sel.r2 - sel.r1 + 1 >= ROWS)) selectAll(); else if (!single && !same) selectAll(); else { if (g.r1 === g.r2 && g.c1 === g.c2) selectAll(); else selRegion(); } }
+function lastUsed() { let mr = 1, mc = 1; for (const kk in sh().cells) { const [r, c] = kk.split(',').map(Number); if (r > mr) mr = r; if (c > mc) mc = c; } return { r: mr, c: mc }; }
+function sheetStep(d) { const i = wb.order.indexOf(cur), n = wb.order[(i + d + wb.order.length) % wb.order.length]; if (n && n !== cur) gotoSheet(n); }
+function delSheetNow() { if (wb.order.length < 2) { stMsg('A workbook needs at least one sheet'); return; } if (!confirm('Delete sheet ' + cur + '?')) return; const n = cur; wb.removeSheet(n); cur = wb.order[0]; save(); renderTabs(); build(); }
+function cornerNext() { const cs = [[sel.r1, sel.c1], [sel.r1, sel.c2], [sel.r2, sel.c2], [sel.r2, sel.c1]]; let i = cs.findIndex(x => x[0] === anchor.r && x[1] === anchor.c); i = (i + 1) % 4; anchor = { r: cs[i][0], c: cs[i][1] }; FC = null; paintSel(sel); const td = tds[anchor.r] && tds[anchor.r][anchor.c]; if (td) td.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
+function copyAbove(asValue) { const r = anchor.r; if (r < 2) return; for (let c = sel.c1; c <= sel.c2; c++) { for (let rr = sel.r1; rr <= sel.r2; rr++) { if (rr < 2) continue; const src = asValue ? wb.value(cur, rr - 1, c) : wb.getRaw(cur, rr - 1, c); wb.setRaw(cur, rr, c, src === null || src === undefined ? '' : src); } } save(); refresh(); }
+function flashFill() {
+  const c = anchor.c; let r0 = anchor.r; const toks = s => String(s).split(/[\s,;@._\-\/]+/).filter(x => x !== '');
+  const cs = [x => x, x => x.toUpperCase(), x => x.toLowerCase(), x => x.charAt(0).toUpperCase() + x.slice(1).toLowerCase(), x => x.charAt(0), x => x.charAt(0).toUpperCase()];
+  for (let srcC = c - 1; srcC >= Math.max(1, c - 4); srcC--) {
+    const ex = []; for (let r = 1; r < r0 + 40 && r <= ROWS; r++) { const o = wb.getRaw(cur, r, c), s = wb.value(cur, r, srcC); if (o !== '' && o !== null && o !== undefined && s !== '' && s !== null && s !== undefined && r < r0 + 1) ex.push([String(s), String(o)]); }
+    if (!ex.length) continue;
+    const gens = []; for (let i = 0; i < 6; i++) for (let k = 0; k < cs.length; k++) { gens.push({ n: [i], k: [k] }); gens.push({ n: [-1 - i], k: [k] }); }
+    for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) if (i !== j) for (let k = 0; k < 4; k++) gens.push({ n: [i, j], k: [k, k] });
+    gens.push({ n: [0, -1], k: [4, 3] }); gens.push({ n: [0, 1], k: [4, 3] });
+    const run = (g, s, pre, mid, post) => { const t = toks(s); const p = g.n.map((n, ix) => { const x = n < 0 ? t[t.length + n] : t[n]; return x === undefined ? null : cs[g.k[ix]](x); }); if (p.some(x => x === null)) return null; return pre + p[0] + (p.length > 1 ? mid + p[1] : '') + post; };
+    for (const g of gens) {
+      const e0 = ex[ex.length - 1]; let pre = '', mid = ' ', post = '';
+      const base = run(g, e0[0], '', '', ''); if (base === null) continue;
+      if (g.n.length === 1) { const ix = e0[1].indexOf(base); if (ix < 0 || !base) continue; pre = e0[1].slice(0, ix); post = e0[1].slice(ix + base.length); }
+      else { const t = toks(e0[0]); const a = run({ n: [g.n[0]], k: [g.k[0]] }, e0[0], '', '', ''), b = run({ n: [g.n[1]], k: [g.k[1]] }, e0[0], '', '', ''); if (a === null || b === null) continue; const ia = e0[1].indexOf(a); if (ia < 0) continue; const ib = e0[1].indexOf(b, ia + a.length); if (ib < 0) continue; pre = e0[1].slice(0, ia); mid = e0[1].slice(ia + a.length, ib); post = e0[1].slice(ib + b.length); }
+      if (ex.every(x => run(g, x[0], pre, mid, post) === x[1])) {
+        let n = 0; for (let r = 1; r <= ROWS; r++) { const s = wb.value(cur, r, srcC), o = wb.getRaw(cur, r, c); if (s === '' || s === null || s === undefined) continue; if (o !== '' && o !== null && o !== undefined) continue; const v = run(g, s, pre, mid, post); if (v !== null) { wb.setRaw(cur, r, c, v); n++; } }
+        save(); refresh(); stMsg('Flash Fill: filled ' + n + ' cell(s)'); return true;
+      }
+    }
+  }
+  stMsg('Flash Fill: type an example first in the cell next to your data'); return false;
+}
+const TIPS = {
+  HAC: () => sty('align', 'center'), HAL: () => sty('align', 'left'), HAR: () => sty('align', 'right'), HOI: () => autoFitCol(), HOA: () => autoFitRow(),
+  HH: () => { const e = document.querySelector('[title*="Fill Color" i],[title*="Fill color" i]'); stMsg('Use Fill Color in the Home ribbon'); if (e) e.click && e.click(); }, HB: () => bordersSel('all'), HW: () => wrapToggle(), HMC: () => mergeSel('center'),
+  H0: () => decs(1), H9: () => decs(-1), HIR: () => insRC('r'), HIC: () => insRC('c'), HDR: () => delRC('r'), HDC: () => delRC('c'), HOH: () => rowHeightDlg(), HOW: () => colWidthDlg(),
+  HOR: () => renSheet(cur), HDS: () => delSheetNow(), ASA: () => sortSel(1), ASD: () => sortSel(-1), ASS: () => filterDlg(), AM: () => dedupe(), AE: () => textToCols(), WFF: () => freezeMenu(sh().frz ? 'none' : 'sel'),
+  H: 'Home', N: 'Insert', P: 'Page Layout', M: 'Formulas', A: 'Data', R: 'Review', W: 'View', F: 'File', Q: 'Search'
+};
+function tipTab(t) { if (t === 'File') { openFile(); return; } if (t === 'Review' || t === 'Search') { stMsg('No ' + t + ' tab in this app'); return; } const d = [...document.querySelectorAll('#rtabs div')].find(x => x.textContent === t); if (d) d.click(); }
+function tipKey(e) {
+  const k = e.key; if (k === 'Escape') { tipMode = false; tipSeq = ''; stMsg('Ready'); return true; }
+  if (k.length !== 1 || !/[a-z0-9]/i.test(k) || e.ctrlKey || e.metaKey) { tipMode = false; return false; }
+  tipSeq += k.toUpperCase(); const keys = Object.keys(TIPS); const ex = TIPS[tipSeq];
+  const more = keys.some(x => x.length > tipSeq.length && x.indexOf(tipSeq) === 0 && typeof TIPS[x] === 'function');
+  e.preventDefault(); e.stopPropagation();
+  if (typeof ex === 'function' && !more) { tipMode = false; const s = tipSeq; tipSeq = ''; ex(); stMsg('Alt+' + s.split('').join(',')); return true; }
+  if (tipSeq.length === 1 && typeof ex === 'string') { if (!more) { tipMode = false; tipSeq = ''; } tipTab(ex); stMsg('Alt,' + k.toUpperCase() + ' ...'); if (!more) return true; return true; }
+  if (more || (typeof ex === 'string')) { stMsg('Alt,' + tipSeq.split('').join(',') + ' ...'); return true; }
+  tipMode = false; tipSeq = ''; stMsg('Ready'); return true;
+}
+function xkeys(e, k, kl, ctrl, prevent) {
+  const sh_ = e.shiftKey, alt = e.altKey;
+  if (tipMode && tipKey(e)) return true;
+  if (k === 'Alt') { if (!e.repeat) { tipMode = true; tipSeq = ''; stMsg('Alt: press H Home, N Insert, P Page Layout, M Formulas, A Data, W View, F File'); } prevent(); return true; }
+  if (k === 'Shift' || k === 'Control' || k === 'Meta') return false;
+  tipMode = false;
+  if (alt && !ctrl) {
+    if (k === 'PageDown') { prevent(); goCell(anchor.r, anchor.c + 10); return true; } if (k === 'PageUp') { prevent(); goCell(anchor.r, anchor.c - 10); return true; }
+    if (k === ';') { prevent(); visOnly = true; stMsg('Visible cells only (copy skips hidden rows/columns)'); return true; }
+    if (k === 'ArrowDown') { prevent(); filterDlg(); return true; }
+    if (k === 'F1' && sh_) { prevent(); addSheet(); return true; } if (k === 'F1') { prevent(); if (sel.r1 !== sel.r2 || sel.c1 !== sel.c2) addChart('bar'); else stMsg('Select the data range first'); return true; }
+    if (k === 'F4') { prevent(); const b = window.__back; if (b) b(); return true; }
+    if (k === 'F5') { prevent(); refresh(); return true; }
+    return false;
+  }
+  if (ctrl && alt && /^F9$/.test(k)) { prevent(); refresh(); stMsg('Full calculation done'); return true; }
+  if (ctrl && !alt) {
+    if (k === 'PageDown') { prevent(); sheetStep(1); return true; } if (k === 'PageUp') { prevent(); sheetStep(-1); return true; }
+    if (k === 'Backspace') { prevent(); const td = tds[anchor.r] && tds[anchor.r][anchor.c]; if (td) td.scrollIntoView({ block: 'center', inline: 'center' }); return true; }
+    if (kl === 'a' && !sh_) { prevent(); ctrlA(); return true; }
+    if (k === '*' || (k === ' ' && sh_)) { prevent(); selRegion(); return true; }
+    if (k === '.') { prevent(); cornerNext(); return true; }
+    if (k === "'") { prevent(); copyAbove(false); return true; } if (k === '"') { prevent(); copyAbove(true); return true; }
+    if (kl === 'e') { prevent(); flashFill(); return true; }
+    if (kl === 'n' && !sh_) { prevent(); if (confirm('Create a new blank workbook? Unsaved changes are lost.')) { wb = new E.Workbook(); cur = 'Sheet1'; book.shapes = {}; save(); renderTabs(); build(); } return true; }
+    if (kl === 'p') { prevent(); window.print(); return true; }
+    if (kl === 'w' || k === 'F4') { prevent(); const b = window.__back; if (b) b(); return true; }
+    if (kl === 't' || (kl === 'l' && !sh_)) { prevent(); fmtTable(); return true; }
+    if (kl === 'l' && sh_) { prevent(); filterDlg(); return true; }
+    if (kl === 'q') { prevent(); stMsg('Quick Analysis: use Insert > Charts or Data on the ribbon'); return true; }
+    if (k === '`') { prevent(); toggleShowF(); return true; }
+    if (k === '&') { prevent(); bordersSel('outside'); return true; }
+    if (k === '_') { prevent(); const S = sel; for (const side of ['bt', 'bb']) for (let c = S.c1; c <= S.c2; c++) setSide(side === 'bt' ? S.r1 : S.r2, c, side, null); for (const side of ['bl', 'br']) for (let r = S.r1; r <= S.r2; r++) setSide(r, side === 'bl' ? S.c1 : S.c2, side, null); save(); refresh(); return true; }
+    if (k === 'F1') { prevent(); ribHidden = !ribHidden; const rb = $('rib'); if (rb) rb.style.display = ribHidden ? 'none' : ''; return true; }
+    if (k === 'F3' && !sh_) { prevent(); stMsg('Names: type a name in the Name Box (left of the formula bar) to define one'); return true; }
+    if (k === 'F3' && sh_) { prevent(); stMsg('Names: type a name in the Name Box to define one'); return true; }
+    if (k === 'Home' && sh_) { prevent(); FC = { r: 1, c: 1 }; setSel(anchor.r, anchor.c, 1, 1); return true; }
+    if (k === 'End' && sh_) { prevent(); const u = lastUsed(); FC = u; setSel(anchor.r, anchor.c, u.r, u.c); return true; }
+    if (k === 'Tab') return false;
+    return false;
+  }
+  if (!ctrl && !alt) {
+    if (k === 'Home' && sh_) { prevent(); const cr = (FC && (FC.r === sel.r1 || FC.r === sel.r2)) ? FC.r : anchor.r; FC = { r: cr, c: 1 }; setSel(anchor.r, anchor.c, cr, 1); return true; }
+    if (k === 'End') { prevent(); endMode = true; stMsg('End mode — press an arrow key'); return true; }
+    if (endMode && /^Arrow/.test(k)) { prevent(); endMode = false; stMsg('Ready'); const dr = k === 'ArrowDown' ? 1 : k === 'ArrowUp' ? -1 : 0, dc = k === 'ArrowRight' ? 1 : k === 'ArrowLeft' ? -1 : 0; const ee = { shiftKey: sh_, ctrlKey: true, metaKey: false }; moveKey(ee, dr, dc); return true; }
+    endMode = false;
+    if ((k === 'PageDown' || k === 'PageUp') && sh_) { prevent(); const d = k === 'PageDown' ? 20 : -20; const cur0 = FC || { r: anchor.r === sel.r1 ? sel.r2 : sel.r1, c: anchor.c === sel.c1 ? sel.c2 : sel.c1 }; FC = { r: Math.max(1, Math.min(ROWS, cur0.r + d)), c: cur0.c }; setSel(anchor.r, anchor.c, FC.r, FC.c); return true; }
+    if (k === 'F1') { prevent(); shortcutsHelp(); return true; }
+    if (k === 'F12') { prevent(); saveX(); return true; }
+    if (k === 'F9') { prevent(); refresh(); stMsg(sh_ ? 'Calculated active sheet' : 'Calculated all sheets'); return true; }
+    if (k === 'F11' && sh_) { prevent(); addSheet(); return true; }
+    if (k === 'F11') { prevent(); if (sel.r1 !== sel.r2 || sel.c1 !== sel.c2) addChart('bar'); else stMsg('Select the data range first'); return true; }
+    if (k === 'F3' && sh_) { prevent(); startEdit('='); return true; }
+    if (k === 'F4') { prevent(); stMsg('F4 cycles $ references while editing a formula'); return true; }
+    if (k === 'F2' && sh_) { prevent(); stMsg('Notes/comments are not supported yet'); return true; }
+    if (k === 'F7') { prevent(); stMsg('Spell check is not available'); return true; }
+    if (k === 'F6') { prevent(); const f = $('nm'); f.focus(); f.select(); return true; }
+  }
+  return false;
+}
+
 document.addEventListener('keydown', e => {
   if (PSD) { const k0 = e.key.toLowerCase(); const m = { a: 'all', f: 'formulas', v: 'values', t: 'formats', e: 'transpose', enter: 'all' }[k0]; if (e.key === 'Escape') { PSD = false; closeGen(); e.preventDefault(); return; } if (m) { e.preventDefault(); e.stopPropagation(); PSD = false; closeGen(); pasteSpecial(m); return; } }
   if (!modalOpen()) PSD = false;
   if (modalOpen()) return;
   const ae = document.activeElement, inFx = ae === $('fx'), inField = /INPUT|TEXTAREA|SELECT/.test(ae.tagName), k = e.key, ctrl = e.ctrlKey || e.metaKey, kl = k.length === 1 ? k.toLowerCase() : k;
-  if (inFx) { if (ctrl && k === 'Enter') { e.preventDefault(); const v = $('fx').value, s0 = Object.assign({}, sel); commitFx(0); for (let r = s0.r1; r <= s0.r2; r++) for (let c = s0.c1; c <= s0.c2; c++) wb.setRaw(cur, r, c, v); sel = s0; save(); refresh(); } return; }
+  if (inFx) { if (ctrl && e.shiftKey && k === 'Enter') { e.preventDefault(); commitFx(0); return; } if (ctrl && k === 'Enter') { e.preventDefault(); const v = $('fx').value, s0 = Object.assign({}, sel); commitFx(0); for (let r = s0.r1; r <= s0.r2; r++) for (let c = s0.c1; c <= s0.c2; c++) wb.setRaw(cur, r, c, v); sel = s0; save(); refresh(); } return; }
   if (inField) return;
   const prevent = () => { e.preventDefault(); e.stopPropagation(); };
+  if (xkeys(e, k, kl, ctrl, prevent)) return;
   if (ctrl && e.altKey && kl === 'v') { prevent(); pasteSpecialDlg(); return; }
   if (ctrl && e.shiftKey && kl === 'v') { prevent(); pasteValuesNow(); return; }
   if (ctrl && !e.altKey) {
