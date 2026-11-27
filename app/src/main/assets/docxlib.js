@@ -42,7 +42,7 @@ window.Docx = (function(){
     if (hasH) put('word/header1.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr '+NS+'>'+m.header.map(block).join('')+'</w:hdr>');
     if (hasF) put('word/footer1.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr '+NS+'>'+m.footer.map(block).join('')+'</w:ftr>');
     const pg = m.page || {w:12240,h:15840};
-    const sect = '<w:sectPr>'+(hasH?'<w:headerReference w:type="default" r:id="rId3"/>':'')+(hasF?'<w:footerReference w:type="default" r:id="rId4"/>':'')+'<w:pgSz w:w="'+pg.w+'" w:h="'+pg.h+'"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr>';
+    const sect = '<w:sectPr>'+(hasH?'<w:headerReference w:type="default" r:id="rId3"/>':'')+(hasF?'<w:footerReference w:type="default" r:id="rId4"/>':'')+'<w:pgSz w:w="'+pg.w+'" w:h="'+pg.h+'"/><w:pgMar w:top="'+(pg.m||1440)+'" w:right="'+(pg.m||1440)+'" w:bottom="'+(pg.m||1440)+'" w:left="'+(pg.m||1440)+'" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr>';
     put('word/document.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document '+NS+'><w:body>'+(m.blocks||[]).map(block).join('')+sect+'</w:body></w:document>');
     return zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
   }

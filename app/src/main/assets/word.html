@@ -1,18 +1,15 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Word - Office HUB</title><link rel="stylesheet" href="common.css">
+<title>Word - Office HUB</title><link rel="stylesheet" href="common.css"><link rel="stylesheet" href="ribbon.css">
 <style>
 html,body{overflow:hidden}body{display:flex;flex-direction:column;height:100%}
-.topbar{background:#2b579a;position:static}
-.tabsrow{display:flex;background:#244a82;overflow-x:auto;flex:0 0 auto}
-.tabsrow div{padding:8px 14px;color:#cfdcf3;font-size:13px;white-space:nowrap}
-.tabsrow div.on{background:#f3f3f3;color:#2b579a;font-weight:600}
-.rib{background:#f3f3f3;border-bottom:1px solid #ccc;flex:0 0 auto}
-.rib .tb{position:static;display:none;border:0;background:transparent;padding:4px 6px}
+.topbar{position:static}
+.tabsrow{display:flex;overflow-x:auto;flex:0 0 auto}
+.tabsrow div{white-space:nowrap}
+.rib{flex:0 0 auto}
+.rib .tb{position:static;display:none;border:0}
 .rib .tb.on{display:flex}
-.rib .tb.two{flex-wrap:wrap;overflow:visible}
-@media (orientation:portrait){.rib .tb[data-t=Home]{flex-wrap:wrap;overflow:visible}}
-#desk{flex:1;overflow:auto;background:#cfd4da;padding:8px 0;-webkit-overflow-scrolling:touch}
-#paper{background:#fff;margin:0 auto;box-shadow:0 2px 8px rgba(0,0,0,.35);padding:0;width:816px;transform-origin:top left;position:relative}
+#desk{flex:1;overflow:auto;background:#e6e6e6;padding:10px 0;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch}
+#paper{background:#fff;margin:0 auto;box-shadow:0 0 0 1px #d0d0d0,0 2px 8px rgba(0,0,0,.25);padding:0;width:816px;transform-origin:top left;position:relative}
 .hf{padding:0 96px;min-height:48px;color:#555;font-size:12px;outline:none}
 #hdr{padding-top:36px;border-bottom:1px dashed #bbb;margin-bottom:8px}
 #ftr{padding-bottom:30px;border-top:1px dashed #bbb;margin-top:8px}
@@ -25,49 +22,31 @@ body.noh #hdr,body.noh #ftr{border-color:transparent}
 .fld{background:#e8eefc;border-radius:3px;padding:0 3px;color:#2b579a}
 body.hfedit #hdr,body.hfedit #ftr{background:#f4f8ff;outline:2px solid #2b579a}
 body.hfedit #body{opacity:.45;pointer-events:none}
-body.fitw #paper{width:auto!important;margin:0 6px}body.fitw .hf,body.fitw #body{padding-left:14px;padding-right:14px}body.fitw #hdr{padding-top:14px}body.fitw #ftr{padding-bottom:14px}
-#status{flex:0 0 auto;background:#2b579a;color:#fff;font-size:12px;padding:3px 8px;display:flex;justify-content:space-between}
-.tb button.act{background:#cfdcf3}
+body.fitw #body{min-height:50vh!important}body.fitw #paper{width:auto!important;margin:0 6px}body.fitw .hf,body.fitw #body{padding-left:14px;padding-right:14px}body.fitw #hdr{padding-top:14px}body.fitw #ftr{padding-bottom:14px}
+#status{flex:0 0 auto}
+body.marks #body p::after,body.marks #body h1::after,body.marks #body h2::after,body.marks #body h3::after,body.marks #body li::after{content:'\00B6';color:#2b579a;font-size:.8em;margin-left:2px}
+.hf,#body{padding-left:var(--mx,96px)!important;padding-right:var(--mx,96px)!important}
+body.fitw .hf,body.fitw #body{padding-left:14px!important;padding-right:14px!important}
+#paper.bord{outline:2px solid #2b579a;outline-offset:-14px}
+#body blockquote{border-left:3px solid #999;margin:8px 0;padding-left:12px;color:#555;font-style:italic}
+.toc p{margin:2px 0}
 </style></head><body>
-<div class="topbar"><button onclick="RB.home()">&#9664;</button><span class="title" id="ttl">Document1 - Word</span><button onclick="openDoc()">Open</button><button onclick="saveDocx()">Save</button><button onclick="document.getElementById('mn').style.display=document.getElementById('mn').style.display==='block'?'none':'block'">&#8942;</button></div>
-<div class="menu" id="mn" onclick="this.style.display='none'"><div onclick="saveDocx()">Save as .docx</div><div onclick="saveHtml()">Save as .html</div><div onclick="exportPdfConv()">Convert to image / PDF...</div><div onclick="newDoc()">New document</div></div>
+<div class="topbar"><button onclick="RB.home()" title="Back to Hub">&#9664;</button><span class="qa"><button onclick="saveDocx()" title="Save (Ctrl+S)">&#128190;</button><button onclick="ex('undo')" title="Undo (Ctrl+Z)">&#8630;</button><button onclick="ex('redo')" title="Redo (Ctrl+Y)">&#8631;</button></span><span class="title" id="ttl">Document1 - Word</span><button class="txt" onclick="openDoc()">Open</button></div>
 <div class="tabsrow" id="rtabs"></div>
 <div class="rib" id="rib">
-<div class="tb on" data-t="Home">
- <button onclick="ex('undo')">&#8630;</button><button onclick="ex('redo')">&#8631;</button><span class="sep"></span>
- <select id="sty" onchange="para(this.value)"><option value="p">Normal</option><option value="h1">Heading 1</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option></select>
- <select id="fn" onchange="ex('fontName',this.value)"><option>Calibri</option><option>Arial</option><option>Times New Roman</option><option>Courier New</option><option>Verdana</option><option>Georgia</option></select>
- <select id="fs" onchange="fsz(this.value)"><option>8</option><option>9</option><option>10</option><option selected>11</option><option>12</option><option>14</option><option>16</option><option>18</option><option>20</option><option>24</option><option>28</option><option>36</option></select>
- <button onclick="ex('bold')"><b>B</b></button><button onclick="ex('italic')"><i>I</i></button><button onclick="ex('underline')"><u>U</u></button><button onclick="ex('strikeThrough')"><s>S</s></button><button onclick="ex('subscript')">x&#8322;</button><button onclick="ex('superscript')">x&sup2;</button>
- <input type="color" value="#ff0000" onchange="ex('foreColor',this.value)" title="Font color"><input type="color" value="#ffff00" onchange="ex('hiliteColor',this.value)" title="Highlight">
- <button onclick="ex('justifyLeft')">&#8676;</button><button onclick="ex('justifyCenter')">&#8596;</button><button onclick="ex('justifyRight')">&#8677;</button><button onclick="ex('justifyFull')">&#9776;</button>
- <button onclick="ex('insertUnorderedList')">&bull;&#8801;</button><button onclick="ex('insertOrderedList')">1.&#8801;</button><button onclick="ex('outdent')">&#8676;&#8801;</button><button onclick="ex('indent')">&#8677;&#8801;</button><button onclick="ex('removeFormat')">Clear</button><button onclick="findRep()">Find</button>
-</div>
-<div class="tb" data-t="Insert">
- <button onclick="insTable()">Table</button><button onclick="insImg()">Picture</button><button onclick="pageBreak()">Page break</button><button onclick="ex('insertHorizontalRule')">Line</button><button onclick="insLink()">Link</button><button onclick="insDate()">Date</button><button onclick="insSym()">Symbol</button>
- <button onclick="tblOp('addRow')">+Row</button><button onclick="tblOp('addCol')">+Col</button><button onclick="tblOp('delRow')">-Row</button><button onclick="tblOp('delCol')">-Col</button>
-</div>
-<div class="tb" data-t="Layout">
- <select id="psz" onchange="pageSize(this.value)"><option value="letter">Letter 8.5x11</option><option value="a4">A4</option><option value="legal">Legal</option></select>
- <select id="lh" onchange="lineH(this.value)"><option value="1.0">Spacing 1.0</option><option value="1.15">1.15</option><option value="1.35" selected>1.35</option><option value="1.5">1.5</option><option value="2.0">2.0</option></select>
- <button onclick="wc()">Word count</button>
-</div>
-<div class="tb" data-t="Header &amp; Footer">
- <button id="hfBtn" onclick="hfToggle()">Edit Header/Footer</button><button onclick="hfIns('PAGE')">Page #</button><button onclick="hfIns('NUMPAGES')">Total pages</button><button onclick="hfDate()">Date</button>
- <button onclick="hfAlign('justifyLeft')">&#8676;</button><button onclick="hfAlign('justifyCenter')">&#8596;</button><button onclick="hfAlign('justifyRight')">&#8677;</button><button onclick="hfClear()">Remove</button>
-</div>
+<div class="tb on" data-t="Home"><div class="grp"><div class="gb"><button class="big" onclick="pasteBtn()" ><i>&#128203;</i>Paste</button><div class="col"><div class="r"><button onclick="ex('cut')" title="" >&#9986; Cut</button></div><div class="r"><button onclick="ex('copy')" title="" >&#10697; Copy</button></div><div class="r"><button onclick="painter()" title="Format Painter" id="fpBtn">&#128396; Format Painter</button></div></div></div><div class="gl">Clipboard</div></div><div class="grp"><div class="gb"><div class="col"><div class="r"><select id="fn" class="sel-w" onchange="ex('fontName',this.value)"><option>Calibri</option><option>Arial</option><option>Times New Roman</option><option>Courier New</option><option>Verdana</option><option>Georgia</option><option>Tahoma</option><option>Segoe UI</option><option>Cambria</option><option>Consolas</option><option>Comic Sans MS</option><option>Trebuchet MS</option></select><select id="fs" class="sel-n" onchange="fsz(this.value)"><option>8</option><option>9</option><option>10</option><option>10.5</option><option selected>11</option><option>12</option><option>14</option><option>16</option><option>18</option><option>20</option><option>22</option><option>24</option><option>26</option><option>28</option><option>36</option><option>48</option><option>72</option></select><button onclick="fstep(1)" title="Grow font" >A&#9650;</button><button onclick="fstep(-1)" title="Shrink font" >A&#9660;</button><select onchange="chCase(this.value);this.selectedIndex=0" style="width:44px"><option>Aa</option><option value="upper">UPPERCASE</option><option value="lower">lowercase</option><option value="title">Capitalize Each Word</option><option value="sentence">Sentence case</option></select><button onclick="ex('removeFormat')" title="Clear all formatting" >&#9003;</button></div><div class="r"><button onclick="ex('bold')" title="Bold (Ctrl+B)" data-c="bold"><b>B</b></button><button onclick="ex('italic')" title="Italic (Ctrl+I)" data-c="italic"><i>I</i></button><button onclick="ex('underline')" title="Underline (Ctrl+U)" data-c="underline"><u>U</u></button><button onclick="ex('strikeThrough')" title="Strikethrough" data-c="strikeThrough"><s>abc</s></button><button onclick="ex('subscript')" title="Subscript" data-c="subscript">x&#8322;</button><button onclick="ex('superscript')" title="Superscript" data-c="superscript">x&sup2;</button><label class="cb" title="Text highlight color"><b style="border-bottom-color:#ffff00">ab</b><input type="color" value="#ffff00" oninput="ex('hiliteColor',this.value);this.previousElementSibling.style.borderBottomColor=this.value"></label><label class="cb" title="Font color"><b style="border-bottom-color:#ff0000">A</b><input type="color" value="#ff0000" oninput="ex('foreColor',this.value);this.previousElementSibling.style.borderBottomColor=this.value"></label></div></div></div><div class="gl">Font</div></div><div class="grp"><div class="gb"><div class="col"><div class="r"><button onclick="ex('insertUnorderedList')" title="Bullets" data-c="insertUnorderedList">&bull;&#8801;</button><button onclick="ex('insertOrderedList')" title="Numbering" data-c="insertOrderedList">1.&#8801;</button><button onclick="ex('outdent')" title="Decrease indent" >&#9664;&#8801;</button><button onclick="ex('indent')" title="Increase indent" >&#8801;&#9654;</button><button onclick="sortParas()" title="Sort" >A&#8595;Z</button><button onclick="toggleMarks()" title="Show/Hide formatting marks" id="mkBtn">&para;</button></div><div class="r"><button onclick="ex('justifyLeft')" title="Align left (Ctrl+L)" data-c="justifyLeft">&#8676;</button><button onclick="ex('justifyCenter')" title="Center (Ctrl+E)" data-c="justifyCenter">&#8596;</button><button onclick="ex('justifyRight')" title="Align right (Ctrl+R)" data-c="justifyRight">&#8677;</button><button onclick="ex('justifyFull')" title="Justify (Ctrl+J)" data-c="justifyFull">&#9776;</button><select onchange="lineSp(this.value);this.selectedIndex=0" title="Line spacing" style="width:44px"><option>&#8597;</option><option value="1">1.0</option><option value="1.15">1.15</option><option value="1.35">1.35</option><option value="1.5">1.5</option><option value="2">2.0</option><option value="3">3.0</option></select><label class="cb" title="Shading"><b style="border-bottom-color:#ffd966">&#9701;</b><input type="color" value="#ffd966" oninput="shade(this.value)"></label><button onclick="pBorder()" title="Borders" >&#9638;</button></div></div></div><div class="gl">Paragraph</div></div><div class="grp"><div class="gb"><div class="gal"><div class="gi" onclick="applyStyle('p')"><b>AaBbCcDc</b><small>&para; Normal</small></div><div class="gi" onclick="applyStyle('nospace')"><b>AaBbCcDc</b><small>&para; No Spacing</small></div><div class="gi" onclick="applyStyle('h1')"><b style="color:#2f5496;font-size:18px">AaBbCc</b><small>Heading 1</small></div><div class="gi" onclick="applyStyle('h2')"><b style="color:#2f5496;font-size:16px">AaBbCcD</b><small>Heading 2</small></div><div class="gi" onclick="applyStyle('h3')"><b style="color:#1f3763">AaBbCcDc</b><small>Heading 3</small></div><div class="gi" onclick="applyStyle('quote')"><b style="font-style:italic;color:#555">AaBbCcDc</b><small>Quote</small></div></div></div><div class="gl">Styles</div></div><div class="grp"><div class="gb"><div class="col"><div class="r"><button onclick="findRep()" title="Find (Ctrl+F)" >&#128269; Find</button></div><div class="r"><button onclick="findRep()" title="Replace (Ctrl+H)" >&#8644; Replace</button></div><div class="r"><button onclick="ex('selectAll')" title="Select all (Ctrl+A)" >&#9744; Select</button></div></div></div><div class="gl">Editing</div></div></div><div class="tb" data-t="Insert"><div class="grp"><div class="gb"><button class="big" onclick="pageBreak()" ><i>&#128196;</i>Page Break</button></div><div class="gl">Pages</div></div><div class="grp"><div class="gb"><button class="big" onclick="insTable()" ><i>&#9638;</i>Table</button><div class="col"><div class="r"><button onclick="tblOp('addRow')" title="" >+Row</button></div><div class="r"><button onclick="tblOp('addCol')" title="" >+Column</button></div><div class="r"><button onclick="tblOp('delRow')" title="" >&minus;Row / Col</button></div></div></div><div class="gl">Tables</div></div><div class="grp"><div class="gb"><button class="big" onclick="insImg()" ><i>&#128444;</i>Pictures</button></div><div class="gl">Illustrations</div></div><div class="grp"><div class="gb"><button class="big" onclick="insLink()" ><i>&#128279;</i>Link</button></div><div class="gl">Links</div></div><div class="grp"><div class="gb"><button class="big" onclick="openHF('hdr')" ><i>&#9636;</i>Header</button><button class="big" onclick="openHF('ftr')" ><i>&#9635;</i>Footer</button><button class="big" onclick="pgNum()" ><i>#</i>Page Number</button></div><div class="gl">Header &amp; Footer</div></div><div class="grp"><div class="gb"><div class="col"><div class="r"><button onclick="insDate()" title="" >&#128197; Date &amp; Time</button></div><div class="r"><button onclick="ex('insertHorizontalRule')" title="" >&#8212; Horizontal Line</button></div><div class="r"><button onclick="insSym()" title="" >&#937; Symbol</button></div></div></div><div class="gl">Text</div></div></div><div class="tb" data-t="Design"><div class="grp"><div class="gb"><button class="big" onclick=""  style="display:none"><i>&#127912;</i>Themes</button><div class="col"><div class="r"><select onchange="theme(this.value);this.selectedIndex=0" style="width:120px"><option>Themes &#9662;</option><option value="Calibri">Office</option><option value="Times New Roman">Classic (Times)</option><option value="Arial">Modern (Arial)</option><option value="Georgia">Elegant (Georgia)</option><option value="Courier New">Typewriter</option></select></div></div></div><div class="gl">Document Formatting</div></div><div class="grp"><div class="gb"><label class="cb" title="Page Color"><b style="border-bottom-color:#ffffff">&#9640;</b><input type="color" value="#ffffff" oninput="pageColor(this.value)"></label><div class="col"><div class="r"><button onclick="" title="" >Page Color</button></div><div class="r"><button onclick="pageBorders()" title="" >Page Borders</button></div></div></div><div class="gl">Page Background</div></div></div><div class="tb" data-t="Layout"><div class="grp"><div class="gb"><div class="col"><div class="r"><select id="mar" onchange="setPage({m:+this.value})" title="Margins"><option value="1440">Margins: Normal</option><option value="720">Narrow</option><option value="1080">Moderate</option><option value="2160">Wide</option></select></div><div class="r"><select id="ori" onchange="setPage({land:this.value==='1'})" title="Orientation"><option value="0">Portrait</option><option value="1">Landscape</option></select></div><div class="r"><select id="psz" onchange="setPage({sz:this.value})" title="Size"><option value="letter">Letter 8.5x11</option><option value="a4">A4</option><option value="legal">Legal</option></select></div></div></div><div class="gl">Page Setup</div></div><div class="grp"><div class="gb"><div class="col"><div class="r"><button onclick="ex('outdent')" title="" >&#9664;&#8801; Indent left</button></div><div class="r"><button onclick="ex('indent')" title="" >&#8801;&#9654; Indent right</button></div></div><div class="col"><div class="r"><select onchange="lineSp(this.value);this.selectedIndex=0"><option>Line spacing</option><option value="1">1.0</option><option value="1.15">1.15</option><option value="1.35">1.35</option><option value="1.5">1.5</option><option value="2">2.0</option></select></div><div class="r"><select onchange="paraSpace(this.value);this.selectedIndex=0"><option>Space after</option><option value="0">0 pt</option><option value="6">6 pt</option><option value="12">12 pt</option><option value="24">24 pt</option></select></div></div></div><div class="gl">Paragraph</div></div><div class="grp"><div class="gb"><button class="big" onclick="pageBreak()" ><i>&#128196;</i>Page Break</button></div><div class="gl">Arrange</div></div></div><div class="tb" data-t="References"><div class="grp"><div class="gb"><button class="big" onclick="insTOC()" ><i>&#128209;</i>Table of Contents</button></div><div class="gl">Table of Contents</div></div><div class="grp"><div class="gb"><button class="big" onclick="insFootnote()" ><i>&#185;</i>Insert Footnote</button></div><div class="gl">Footnotes</div></div><div class="grp"><div class="gb"><button class="big" onclick="insCaption()" ><i>&#128444;</i>Insert Caption</button></div><div class="gl">Captions</div></div></div><div class="tb" data-t="Review"><div class="grp"><div class="gb"><button class="big" onclick="spellTog()" id="spBtn"><i>&#10003;</i>Spelling</button><button class="big" onclick="wc()" ><i>&#35;</i>Word Count</button></div><div class="gl">Proofing</div></div><div class="grp"><div class="gb"><button class="big" onclick="findRep()" ><i>&#128269;</i>Find &amp; Replace</button></div><div class="gl">Find</div></div></div><div class="tb" data-t="View"><div class="grp"><div class="gb"><button class="big" onclick="viewMode('print')" ><i>&#128214;</i>Print Layout</button><button class="big" onclick="viewMode('reflow')" ><i>&#128241;</i>Reflow (phone)</button></div><div class="gl">Views</div></div><div class="grp"><div class="gb"><div class="col"><div class="r"><button onclick="toggleMarks()" title="" >&para; Formatting marks</button></div></div></div><div class="gl">Show</div></div><div class="grp"><div class="gb"><button class="big" onclick="zoomStep(10)" ><i>&#128269;</i>Zoom +</button><button class="big" onclick="zoomStep(-10)" ><i>&#128269;</i>Zoom &minus;</button><button class="big" onclick="setZ(1)" ><i>100%</i>100%</button><button class="big" onclick="pageWidth()" ><i>&#8596;</i>Page Width</button></div><div class="gl">Zoom</div></div></div><div class="tb" data-t="Header &amp; Footer"><div class="grp"><div class="gb"><button class="big" onclick="openHF('hdr')" ><i>&#9636;</i>Edit Header</button><button class="big" onclick="openHF('ftr')" ><i>&#9635;</i>Edit Footer</button><button class="big" onclick="hfClear()" ><i>&#10005;</i>Remove</button></div><div class="gl">Header &amp; Footer</div></div><div class="grp"><div class="gb"><button class="big" onclick="hfIns('PAGE')" ><i>#</i>Page Number</button><button class="big" onclick="hfIns('NUMPAGES')" ><i>N</i>Total Pages</button><button class="big" onclick="hfDate()" ><i>&#128197;</i>Date &amp; Time</button></div><div class="gl">Insert</div></div><div class="grp"><div class="gb"><div class="col"><div class="r"><button onclick="hfAlign('justifyLeft')" title="" >&#8676; Left</button></div><div class="r"><button onclick="hfAlign('justifyCenter')" title="" >&#8596; Center</button></div><div class="r"><button onclick="hfAlign('justifyRight')" title="" >&#8677; Right</button></div></div></div><div class="gl">Position</div></div><div class="grp"><div class="gb"><button class="big" onclick="closeHF()" id="hfBtn"><i>&#10003;</i>Close Header and Footer</button></div><div class="gl">Close</div></div></div>
 </div>
 <div id="desk"><div id="paper"><div id="hdr" class="hf" contenteditable="true" data-ph="Header"></div><div id="body" contenteditable="true" spellcheck="true"><p><br></p></div><div id="ftr" class="hf" contenteditable="true" data-ph="Footer"></div></div></div>
-<div id="status"><span id="stL">Page 1</span><span id="stR">0 words</span></div>
+<div id="status"><span id="stL">Page 1 of 1</span><span id="stR">0 words</span><span class="sp"></span><span class="vw"><b class="on" onclick="viewMode('print')" title="Print Layout">&#9636;</b><b onclick="viewMode('reflow')" title="Reflow">&#9776;</b></span><span class="zm"><button onclick="zoomStep(-10)">&minus;</button><input type="range" id="zs" min="40" max="200" value="100" oninput="setZ(this.value/100)"><button onclick="zoomStep(10)">+</button><span id="zp" onclick="setZ(1)">100%</span></span></div>
 <div class="modal" id="mG"><div class="box"><h3 id="gT"></h3><div id="gB"></div><div class="row" id="gR"></div></div></div>
 <script src="libs/jszip.min.js"></script><script src="libs/mammoth.browser.min.js"></script><script src="common.js"></script><script src="docxlib.js"></script>
 <script>
 const $=id=>document.getElementById(id);let name='Document1',pg={w:12240,h:15840},lastSel=null;
 document.execCommand('styleWithCSS',false,true);
 /* tabs */
-const TABS=['Home','Insert','Layout','Header & Footer'];
-$('rtabs').innerHTML=TABS.map((t,i)=>`<div class="${i?'':'on'}" onclick="tab('${t}',this)">${t}</div>`).join('');
-function tab(t,el){document.querySelectorAll('#rtabs div').forEach(d=>d.classList.remove('on'));el.classList.add('on');document.querySelectorAll('.rib .tb').forEach(b=>b.classList.toggle('on',b.dataset.t.replace('&amp;','&')===t));if(t==='Header & Footer'){hfSet(true)}else hfSet(false);}
+const TABS=['File','Home','Insert','Design','Layout','References','Review','View'];let curTab='Home';
+function renderTabs(){const L=TABS.concat(document.body.classList.contains('hfedit')?['Header & Footer']:[]);$('rtabs').innerHTML=L.map(t=>`<div class="${t===curTab?'on':''}${t==='File'?' file':''}" onclick="tab('${t.replace(/'/g,"\\'")}')">${t}</div>`).join('');document.querySelectorAll('.rib .tb').forEach(b=>b.classList.toggle('on',b.dataset.t.replace('&amp;','&')===curTab));}
+function tab(t){if(t==='File'){fileMenu();return;}curTab=t;if(t==='Header & Footer')hfSet(true);else if(document.body.classList.contains('hfedit'))hfSet(false);renderTabs();}
 /* keep selection when pressing ribbon buttons */
 document.querySelectorAll('.rib button').forEach(b=>b.addEventListener('mousedown',e=>e.preventDefault()));
 document.addEventListener('selectionchange',()=>{const s=getSelection();if(s.rangeCount&&($('body').contains(s.anchorNode)||$('hdr').contains(s.anchorNode)||$('ftr').contains(s.anchorNode)))lastSel=s.getRangeAt(0).cloneRange();});
@@ -75,10 +54,22 @@ function restore(){if(lastSel){const s=getSelection();s.removeAllRanges();s.addR
 function ex(c,v){restore();document.execCommand(c,false,v||null);upd();}
 function para(t){restore();document.execCommand('formatBlock',false,t==='p'?'<p>':'<'+t+'>');upd();}
 function fsz(px){restore();document.execCommand('fontSize',false,7);document.querySelectorAll('font[size="7"],span[style*="xxx-large"]').forEach(f=>{const sp=document.createElement('span');sp.style.fontSize=px+'pt';while(f.firstChild)sp.appendChild(f.firstChild);f.replaceWith(sp);});upd();}
-function upd(){const t=($('body').innerText||'').trim();$('stR').textContent=(t?t.split(/\s+/).length:0)+' words';save();}
+function upd(){const t=($('body').innerText||'').trim();$('stR').textContent=(t?t.split(/\s+/).length:0)+' words';pageInfo();save();}
 $('body').addEventListener('input',upd);
 /* fit paper to screen */
-function fit(){const dw=$('desk').clientWidth;const narrow=dw<700;document.body.classList.toggle('fitw',narrow);if(narrow){$('paper').style.width='';$('paper').style.zoom=1;}else{$('paper').style.width=Math.round(pg.w/15)+'px';$('paper').style.zoom=Math.min(1,(dw-12)/$('paper').offsetWidth);}}
+let uz=1,MODE='auto',pgS={sz:'letter',land:false,m:1440};
+function fit(){const dw=$('desk').clientWidth,P=$('paper'),pw=Math.round(pg.w/15);const narrow=MODE==='reflow'||(MODE==='auto'&&dw<700);document.body.classList.toggle('fitw',narrow);P.style.setProperty('--mx',Math.round((pg.m||1440)/15)+'px');
+  if(narrow){P.style.width='';P.style.zoom=uz;}else{P.style.width=pw+'px';P.style.zoom=Math.min(1,(dw-12)/pw)*uz;}pageInfo();}
+function setZ(z){uz=Math.max(.4,Math.min(2,Math.round(z*100)/100));$('zs').value=uz*100;$('zp').textContent=Math.round(uz*100)+'%';fit();}
+function zoomStep(d){setZ(uz+d/100)}
+function pageWidth(){setZ(1)}
+function viewMode(m){MODE=m;document.querySelectorAll('#status .vw b').forEach((b,i)=>b.classList.toggle('on',(i===0)===(m!=='reflow')));fit();}
+function pageInfo(){const d=$('desk'),P=$('paper');const pageH=pg.h/15;const narrow=document.body.classList.contains('fitw');const words=(($('body').innerText||'').trim().split(/\s+/).filter(Boolean).length);const pages=narrow?Math.max(1,Math.ceil(words/450)):Math.max(1,Math.ceil(P.offsetHeight/pageH));const cur=Math.min(pages,Math.max(1,Math.floor(((d.scrollTop+d.clientHeight/3)/Math.max(1,d.scrollHeight))*pages)+1));$('stL').textContent='Page '+cur+' of '+pages;}
+$('desk').addEventListener('scroll',pageInfo);
+(function(){const W=$('desk');let pz=null;const dist=e=>Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+W.addEventListener('touchstart',e=>{if(e.touches.length===2)pz={d:dist(e),z:uz};},{passive:true});
+W.addEventListener('touchmove',e=>{if(pz&&e.touches.length===2){e.preventDefault();setZ(pz.z*dist(e)/pz.d);}},{passive:false});
+W.addEventListener('touchend',e=>{if(e.touches.length<2)pz=null;});})();
 window.addEventListener('resize',fit);
 /* insert */
 function insTable(){gen('Insert table','<label>Rows</label><input type="number" id="tr" value="3"><label>Columns</label><input type="number" id="tc" value="3">',[['Insert',()=>{const r=+$('tr').value,c=+$('tc').value;let h='<table>';for(let i=0;i<r;i++){h+='<tr>'+'<td><br></td>'.repeat(c)+'</tr>';}h+='</table><p><br></p>';closeG();restore();document.execCommand('insertHTML',false,h);upd();}]]);}
@@ -93,10 +84,14 @@ function insSym(){const s='&#169; &#174; &#8482; &#176; &#177; &#215; &#247; &#8
 function findRep(){gen('Find & Replace','<label>Find</label><input type="text" id="ff"><label>Replace with</label><input type="text" id="fr">',[['Replace all',()=>{const f=$('ff').value,r=$('fr').value;if(!f)return;const w=document.createTreeWalker($('body'),NodeFilter.SHOW_TEXT);let n,c=0;const L=[];while(n=w.nextNode())L.push(n);L.forEach(t=>{if(t.nodeValue.includes(f)){c+=t.nodeValue.split(f).length-1;t.nodeValue=t.nodeValue.split(f).join(r);}});closeG();upd();alert(c+' replacement(s).');}]]);}
 function wc(){const t=$('body').innerText||'';alert('Words: '+(t.trim()?t.trim().split(/\s+/).length:0)+'\nCharacters: '+t.length);}
 /* layout */
-function pageSize(v){pg=v==='a4'?{w:11906,h:16838}:v==='legal'?{w:12240,h:20160}:{w:12240,h:15840};$('body').style.minHeight=Math.round(pg.h/15-250)+'px';fit();save();}
+const SZ={letter:[12240,15840],a4:[11906,16838],legal:[12240,20160]};
+function setPage(o){Object.assign(pgS,o||{});const s=SZ[pgS.sz]||SZ.letter;pg={w:pgS.land?s[1]:s[0],h:pgS.land?s[0]:s[1],m:pgS.m};$('body').style.minHeight=Math.round(pg.h/15-250)+'px';if($('mar'))$('mar').value=pgS.m;if($('ori'))$('ori').value=pgS.land?'1':'0';if($('psz'))$('psz').value=pgS.sz;fit();save();}
+function pageSize(v){setPage({sz:v})}
 function lineH(v){$('body').style.lineHeight=v;}
 /* header / footer */
-function hfSet(on){document.body.classList.toggle('hfedit',on);$('hfBtn').classList.toggle('act',on);if(on){$('hdr').focus();}}
+function hfSet(on){document.body.classList.toggle('hfedit',on);if(on){curTab='Header & Footer';$('hdr').focus();}else if(curTab==='Header & Footer')curTab='Home';renderTabs();}
+function openHF(id){hfSet(true);$(id).focus();}
+function closeHF(){hfSet(false);}
 function hfToggle(){hfSet(!document.body.classList.contains('hfedit'));}
 function hfTarget(){return $('ftr').contains(getSelection().anchorNode)?$('ftr'):$('hdr').contains(getSelection().anchorNode)?$('hdr'):$('ftr');}
 function hfIns(f){restore();const t=hfTarget();if(!t.contains(getSelection().anchorNode)){t.focus();}document.execCommand('insertHTML',false,`<span class="fld" contenteditable="false" data-f="${f}">${f==='PAGE'?'#':'N'}</span>&nbsp;`);save();}
@@ -138,9 +133,65 @@ async function openDoc(){RB.pickFile('.docx,.html,.htm,.txt',async(n,buf)=>{name
 function newDoc(){if(!confirm('Start a new document? Unsaved changes are lost.'))return;$('body').innerHTML='<p><br></p>';$('hdr').innerHTML='';$('ftr').innerHTML='';name='Document1';$('ttl').textContent='Document1 - Word';upd();}
 function exportPdfConv(){save();alert('Open PDF Converter > Office to Image, then choose this saved .docx.');}
 /* persistence */
-function save(){try{localStorage.setItem('hub_word_doc',JSON.stringify({b:$('body').innerHTML,h:$('hdr').innerHTML,f:$('ftr').innerHTML,pg,name}));}catch(e){}}
-function init(){try{const imp=localStorage.getItem('hub_import_word');if(imp){localStorage.removeItem('hub_import_word');$('body').innerHTML=imp;name='Converted';$('ttl').textContent='Converted - Word';}else{const o=JSON.parse(localStorage.getItem('hub_word_doc')||'null');if(o){$('body').innerHTML=o.b;$('hdr').innerHTML=o.h;$('ftr').innerHTML=o.f;pg=o.pg||pg;name=o.name||name;$('ttl').textContent=name+' - Word';}}}catch(e){}
-  fit();upd();}
+function save(){try{localStorage.setItem('hub_word_doc',JSON.stringify({b:$('body').innerHTML,h:$('hdr').innerHTML,f:$('ftr').innerHTML,pg,pgS,name}));}catch(e){}}
+function init(){try{const imp=localStorage.getItem('hub_import_word');if(imp){localStorage.removeItem('hub_import_word');$('body').innerHTML=imp;name='Converted';$('ttl').textContent='Converted - Word';}else{const o=JSON.parse(localStorage.getItem('hub_word_doc')||'null');if(o){$('body').innerHTML=o.b;$('hdr').innerHTML=o.h;$('ftr').innerHTML=o.f;pg=o.pg||pg;pgS=o.pgS||pgS;name=o.name||name;$('ttl').textContent=name+' - Word';}}}catch(e){}
+  renderTabs();setPage();fit();upd();syncUI();}
+
+/* ---------- desktop-style ribbon features ---------- */
+function curSize(){let n=getSelection().anchorNode;if(n&&n.nodeType===3)n=n.parentNode;if(!n||!$('paper').contains(n))n=$('body');return Math.round(parseFloat(getComputedStyle(n).fontSize)*0.75*2)/2;}
+const FSIZES=[8,9,10,10.5,11,12,14,16,18,20,22,24,26,28,36,48,72];
+function fstep(d){restore();const p=curSize();let v;if(d>0){v=FSIZES.find(x=>x>p)||72;}else{v=[...FSIZES].reverse().find(x=>x<p)||8;}fsz(v);syncUI();}
+function blocksInSel(){restore();const s=getSelection();if(!s.rangeCount)return[];const r=s.getRangeAt(0);const all=[...$('body').querySelectorAll('p,h1,h2,h3,li,blockquote,div:not(.pb):not(.toc)')].filter(el=>!el.querySelector('p,h1,h2,h3,li,blockquote,div,table'));const hit=all.filter(el=>r.intersectsNode(el));if(hit.length)return hit;let n=s.anchorNode;while(n&&n!==$('body')&&!/^(P|H[1-3]|LI|BLOCKQUOTE|DIV)$/.test(n.nodeName))n=n.parentNode;return n&&n!==$('body')?[n]:[];}
+function applyStyle(n){restore();if(n==='p'||n==='nospace')document.execCommand('formatBlock',false,'<p>');else if(n==='quote')document.execCommand('formatBlock',false,'<blockquote>');else document.execCommand('formatBlock',false,'<'+n+'>');
+  blocksInSel().forEach(b=>{b.style.margin=n==='nospace'?'0':'';b.style.lineHeight=n==='nospace'?'1':'';});upd();}
+function lineSp(v){blocksInSel().forEach(b=>b.style.lineHeight=v);upd();}
+function paraSpace(v){blocksInSel().forEach(b=>b.style.marginBottom=v+'pt');upd();}
+function shade(c){blocksInSel().forEach(b=>b.style.backgroundColor=c);upd();}
+function pBorder(){blocksInSel().forEach(b=>b.style.border=b.style.border?'':'1px solid #000');upd();}
+function chCase(m){restore();const s=getSelection();let t=s.toString();if(!t)return;t=m==='upper'?t.toUpperCase():m==='lower'?t.toLowerCase():m==='title'?t.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase()):t.toLowerCase().replace(/(^\s*|[.!?]\s+)(\w)/g,(a,b,c)=>b+c.toUpperCase());document.execCommand('insertText',false,t);upd();}
+let sortDir=1;function sortParas(){const bs=blocksInSel();if(bs.length<2){return}const par=bs[0].parentNode;if(!bs.every(b=>b.parentNode===par))return;const arr=bs.slice().sort((a,b)=>sortDir*a.textContent.localeCompare(b.textContent));const ref=bs[bs.length-1].nextSibling;arr.forEach(b=>par.insertBefore(b,ref));sortDir=-sortDir;upd();}
+function toggleMarks(){document.body.classList.toggle('marks');$('mkBtn').classList.toggle('act',document.body.classList.contains('marks'));}
+async function pasteBtn(){restore();try{const t=await navigator.clipboard.readText();if(t){document.execCommand('insertText',false,t);upd();return;}}catch(e){}alert('Use Ctrl+V on a keyboard, or long-press in the page and choose Paste.');}
+let FP=null;
+function painter(){if(FP){FP=null;$('fpBtn').classList.remove('act');return;}restore();const q=c=>document.queryCommandState(c);FP={b:q('bold'),i:q('italic'),u:q('underline'),s:q('strikeThrough'),font:document.queryCommandValue('fontName'),color:document.queryCommandValue('foreColor'),size:curSize()};$('fpBtn').classList.add('act');}
+$('desk').addEventListener('pointerup',()=>setTimeout(()=>{if(!FP)return;const s=getSelection();if(s.isCollapsed||!$('body').contains(s.anchorNode))return;lastSel=s.getRangeAt(0).cloneRange();const q=c=>document.queryCommandState(c);if(q('bold')!==FP.b)ex('bold');if(q('italic')!==FP.i)ex('italic');if(q('underline')!==FP.u)ex('underline');if(q('strikeThrough')!==FP.s)ex('strikeThrough');if(FP.font)ex('fontName',FP.font.replace(/["']/g,''));if(FP.color)ex('foreColor',FP.color);fsz(FP.size);FP=null;$('fpBtn').classList.remove('act');},60));
+function theme(f){if(!f||f==='Themes')return;const s=getSelection(),r=document.createRange();r.selectNodeContents($('body'));s.removeAllRanges();s.addRange(r);document.execCommand('fontName',false,f);s.removeAllRanges();upd();}
+function pageColor(c){$('paper').style.background=c;}
+function pageBorders(){$('paper').classList.toggle('bord');}
+function insTOC(){restore();const hs=[...$('body').querySelectorAll('h1,h2,h3')];if(!hs.length){alert('Add some headings first (Home > Styles > Heading 1).');return;}let h='<div class="toc"><p><b>Table of Contents</b></p>'+hs.map(e=>`<p style="margin-left:${(+e.nodeName[1]-1)*18}px">${e.textContent.replace(/</g,'&lt;')}</p>`).join('')+'</div><p><br></p>';document.execCommand('insertHTML',false,h);upd();}
+function insFootnote(){restore();const lr=lastSel;RB.ask('Footnote text','',t=>{if(t===null)return;lastSel=lr;restore();const n=$('body').querySelectorAll('.fn').length+1;document.execCommand('insertHTML',false,'<sup>'+n+'</sup>');const p=document.createElement('p');p.className='fn';p.style.fontSize='9pt';p.innerHTML='<sup>'+n+'</sup> '+String(t).replace(/</g,'&lt;');$('body').appendChild(p);upd();});}
+function insCaption(){restore();const lr=lastSel;RB.ask('Caption','Figure 1',t=>{if(!t)return;lastSel=lr;restore();document.execCommand('insertHTML',false,'<p style="text-align:center;font-size:9pt;color:#44546a"><i>'+String(t).replace(/</g,'&lt;')+'</i></p>');upd();});}
+function spellTog(){const b=$('body');b.spellcheck=!b.spellcheck;$('spBtn').classList.toggle('act',b.spellcheck);}
+function pgNum(){$('ftr').innerHTML='<p style="text-align:center"><span class="fld" contenteditable="false" data-f="PAGE">#</span></p>';save();alert('Page number added to the footer.');}
+function fileMenu(){const it=(ic,t,f)=>`<div style="padding:12px 6px;border-bottom:1px solid #eee;font-size:15px" onclick="closeG();${f}">${ic} &nbsp;${t}</div>`;gen('File',it('&#128196;','New document','newDoc()')+it('&#128194;','Open&hellip;','openDoc()')+it('&#128190;','Save as Word (.docx)','saveDocx()')+it('&#127760;','Save as web page (.html)','saveHtml()')+it('&#128444;','Convert to image / PDF&hellip;','exportPdfConv()')+it('&#9432;','Word count','wc()'),[]);}
+/* ribbon state */
+let _sy=0;function syncUI(){const s=getSelection();if(!s.rangeCount||!($('body').contains(s.anchorNode)||$('hdr').contains(s.anchorNode)||$('ftr').contains(s.anchorNode)))return;
+  document.querySelectorAll('.rib [data-c]').forEach(b=>{try{b.classList.toggle('act',document.queryCommandState(b.dataset.c))}catch(e){}});
+  try{const f=(document.queryCommandValue('fontName')||'').split(',')[0].replace(/["']/g,'').trim();if(f){const el=$('fn');if(![...el.options].some(o=>o.text===f)){const o=document.createElement('option');o.textContent=f;el.appendChild(o);}el.value=f;}const sz=curSize();const e2=$('fs');if(![...e2.options].some(o=>+o.text===sz)){const o=document.createElement('option');o.textContent=sz;e2.appendChild(o);}e2.value=sz;}catch(e){}}
+document.addEventListener('selectionchange',()=>{clearTimeout(_sy);_sy=setTimeout(syncUI,80);});
+/* keyboard shortcuts (same as desktop Word) */
+document.addEventListener('keydown',e=>{
+  if($('mG').style.display==='flex')return;const ctrl=e.ctrlKey||e.metaKey,k=e.key,kl=k.length===1?k.toLowerCase():k;const t=document.activeElement.tagName;if(/^(INPUT|SELECT|TEXTAREA)$/.test(t))return;
+  const P=()=>{e.preventDefault();e.stopPropagation();};
+  if(k==='F7'){P();spellTog();return;}
+  if(k==='Escape'){if(FP){FP=null;$('fpBtn').classList.remove('act');}else if(document.body.classList.contains('hfedit'))closeHF();return;}
+  if(!ctrl||e.altKey&&!(e.ctrlKey&&e.altKey))return;
+  if(e.altKey){if(k==='1'||k==='2'||k==='3'){P();applyStyle('h'+k);}else if(k==='0'){P();applyStyle('p');}return;}
+  switch(kl){
+    case 's':P();saveDocx();return;case 'o':P();openDoc();return;case 'n':if(!e.shiftKey){P();newDoc();}else{P();applyStyle('p');}return;
+    case 'f':case 'h':P();findRep();return;case 'k':P();insLink();return;
+    case 'l':if(e.shiftKey){P();ex('insertUnorderedList');}else{P();ex('justifyLeft');}return;case 'e':P();ex('justifyCenter');return;case 'r':P();ex('justifyRight');return;case 'j':P();ex('justifyFull');return;
+    case 'm':P();ex(e.shiftKey?'outdent':'indent');return;case ' ':P();ex('removeFormat');return;
+    case 'enter':P();pageBreak();return;
+    case '1':P();lineSp('1');return;case '2':P();lineSp('2');return;case '5':P();lineSp('1.5');return;
+    case '=':P();ex(e.shiftKey?'superscript':'subscript');return;case '+':P();ex('superscript');return;
+    case ']':case '>':case '.':if(k===']'||e.shiftKey){P();fstep(1);}return;
+    case '[':case '<':case ',':if(k==='['||e.shiftKey){P();fstep(-1);}return;
+    case '8':case '*':if(e.shiftKey||k==='*'){P();toggleMarks();}return;
+    case 'p':P();alert('Printing: save as .docx or convert to PDF from File.');return;
+    case 'w':P();RB.home();return;
+  }
+},true);
 window.__back=()=>{if($('mG').style.display==='flex'){closeG();return}RB.home()};
 init();
 </script></body></html>

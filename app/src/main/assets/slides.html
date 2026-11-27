@@ -31,7 +31,7 @@ html,body{overflow:hidden}body{display:flex;flex-direction:column;height:100%}
 #presS{position:absolute;transform-origin:0 0;background:#fff;overflow:hidden}
 .tb button.act{background:#f5d3c9}
 </style></head><body>
-<div class="topbar"><button onclick="RB.home()">&#9664;</button><span class="title" id="ttl">Presentation1 - PowerPoint</span><button onclick="openPptx()">Open</button><button onclick="savePptx()">Save</button><button onclick="present(0)">&#9654;</button></div>
+<div class="topbar"><button onclick="RB.home()">&#9664;</button><span class="title" id="ttl">Presentation1 - PowerPoint</span><button onclick="undo()" title="Undo (Ctrl+Z)">&#8630;</button><button onclick="redo()" title="Redo (Ctrl+Y)">&#8631;</button><button onclick="openPptx()">Open</button><button onclick="savePptx()">Save</button><button onclick="present(0)">&#9654;</button></div>
 <div class="tabsrow" id="rtabs"></div>
 <div class="rib" id="rib">
 <div class="tb on" data-t="Home">
@@ -135,6 +135,50 @@ function init(){let imp=null;try{imp=localStorage.getItem('hub_import_slides');}
   else{try{const o=JSON.parse(localStorage.getItem('hub_slides_deck')||'null');if(o){deck=o.deck;name=o.name||name;}}catch(e){}}
   if(!deck.slides.length){deck.slides.push(mkSlide());S().items.push({type:'text',x:80,y:150,w:800,h:110,text:'Click to add title',size:48,bold:true,align:'center',color:'#000000'},{type:'text',x:160,y:290,w:640,h:60,text:'Click to add subtitle',size:24,align:'center',color:'#555555'});}
   ensure();$('ttl').textContent=name+' - PowerPoint';render();}
+
+/* ---------- undo/redo + desktop shortcuts ---------- */
+const HS={a:[],i:-1,busy:false};let SCLIP=null;
+const _sv0=save;
+save=function(){_sv0();pushH();};
+function pushH(){if(HS.busy)return;const t=JSON.stringify(deck);if(HS.a[HS.i]===t)return;HS.a=HS.a.slice(0,HS.i+1);HS.a.push(t);if(HS.a.length>50)HS.a.shift();HS.i=HS.a.length-1;}
+function restoreH(){HS.busy=true;try{endEdit();deck=JSON.parse(HS.a[HS.i]);cur=Math.min(cur,deck.slides.length-1);selId=null;_sv0();render();}finally{HS.busy=false;}}
+function undo(){if(HS.i>0){HS.i--;restoreH();}}function redo(){if(HS.i<HS.a.length-1){HS.i++;restoreH();}}
+function dupItem(){const it=sel();if(!it)return false;const c=JSON.parse(JSON.stringify(it));c.id=nid();c.x+=20;c.y+=20;S().items.push(c);selId=c.id;save();render();return true;}
+function nudge(dx,dy){const it=sel();if(!it)return false;it.x+=dx;it.y+=dy;save();render();return true;}
+function goSlide(i){endEdit();cur=Math.max(0,Math.min(deck.slides.length-1,i));selId=null;render();}
+document.addEventListener('keydown',e=>{
+  const ae=document.activeElement;if($('pres').style.display==='flex'){if(e.key==='F5'||e.key==='Escape'){}return;}
+  if(ae&&ae.isContentEditable){if(e.key==='Escape'||(e.key==='Enter'&&(e.ctrlKey||e.metaKey))){e.preventDefault();endEdit();}return;}
+  if(ae&&/^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName))return;
+  const ctrl=e.ctrlKey||e.metaKey,k=e.key,kl=k.length===1?k.toLowerCase():k;const P=()=>{e.preventDefault();e.stopPropagation();};
+  if(k==='F5'){P();present(e.shiftKey?cur:0);return;}
+  if(ctrl){
+    switch(kl){
+      case 'z':P();undo();return;case 'y':P();redo();return;
+      case 's':P();savePptx();return;case 'o':P();openPptx();return;case 'm':P();newSlide();return;
+      case 'd':P();if(!dupItem())dupSlide();return;
+      case 'c':P();if(sel())SCLIP=JSON.stringify(sel());return;
+      case 'x':P();if(sel()){SCLIP=JSON.stringify(sel());delItem();}return;
+      case 'v':P();if(SCLIP){const c=JSON.parse(SCLIP);c.id=nid();c.x+=20;c.y+=20;endEdit();S().items.push(c);selId=c.id;save();render();}return;
+      case 'b':P();if(sel()&&sel().type==='text')tgP('bold');return;case 'i':P();if(sel()&&sel().type==='text')tgP('italic');return;case 'u':P();if(sel()&&sel().type==='text')tgP('underline');return;
+      case 'l':P();if(sel())setP('align','left');return;case 'e':P();if(sel())setP('align','center');return;case 'r':P();if(sel())setP('align','right');return;
+      case ']':case '>':case '.':{const it=sel();if(it&&it.type==='text'&&(k===']'||e.shiftKey)){P();it.size=Math.min(200,(it.size||20)+2);save();render();}return;}
+      case '[':case '<':case ',':{const it=sel();if(it&&it.type==='text'&&(k==='['||e.shiftKey)){P();it.size=Math.max(6,(it.size||20)-2);save();render();}return;}
+      case 'Home':P();goSlide(0);return;case 'End':P();goSlide(deck.slides.length-1);return;
+      case 'ArrowUp':case 'ArrowDown':case 'ArrowLeft':case 'ArrowRight':{if(sel()){P();nudge(({ArrowLeft:-1,ArrowRight:1})[k]||0,({ArrowUp:-1,ArrowDown:1})[k]||0);}return;}
+      case 'a':P();return;
+    }
+    return;
+  }
+  if(k==='Delete'||k==='Backspace'){if(sel()){P();delItem();}else if(deck.slides.length>1){P();delSlide();}return;}
+  if(k==='Enter'){if(sel()&&sel().type==='text'){P();editText();}else{P();newSlide();}return;}
+  if(k==='Escape'){selId=null;document.querySelectorAll('.it.sel').forEach(x=>x.classList.remove('sel'));return;}
+  if(k==='Tab'){P();const it=S().items;if(!it.length)return;let i=it.findIndex(x=>x.id===selId);i=(i+(e.shiftKey?-1:1)+it.length)%it.length;selId=it[i].id;render();return;}
+  if(k.startsWith('Arrow')){const d=e.shiftKey?20:4;if(sel()){P();nudge(({ArrowLeft:-d,ArrowRight:d})[k]||0,({ArrowUp:-d,ArrowDown:d})[k]||0);}else{P();goSlide(cur+(k==='ArrowRight'||k==='ArrowDown'?1:-1));}return;}
+  if(k==='PageDown'){P();goSlide(cur+1);return;}if(k==='PageUp'){P();goSlide(cur-1);return;}
+  if(k==='Home'){P();goSlide(0);return;}if(k==='End'){P();goSlide(deck.slides.length-1);return;}
+  if(kl==='f2'){P();editText();}
+},true);
 window.__back=()=>{if($('pres').style.display==='flex'){endP();return}RB.home()};
-init();
+init();pushH();
 </script></body></html>

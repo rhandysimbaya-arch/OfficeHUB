@@ -1,0 +1,54 @@
+/* Desktop Office-style chrome shared by Word and Excel.  Set --app (title/tabs colour) and --appd (darker) per page. */
+:root{--app:#2b579a;--hl:#c5d5ee;--hlt:#2b579a}
+html,body{font-family:"Segoe UI",Roboto,Arial,sans-serif}
+.topbar{background:var(--app);padding:0 4px;height:34px;gap:0;color:#fff}
+.topbar button{background:none;border-radius:3px;padding:0 8px;height:30px;font-size:16px;line-height:1;min-width:30px}
+.topbar button:active{background:rgba(255,255,255,.25)}
+.topbar .title{text-align:center;font-weight:400;font-size:13px;letter-spacing:.1px}
+.topbar .qa{display:flex;align-items:center}
+.topbar .txt{font-size:12px}
+.tabsrow{background:var(--app)!important;padding:0 4px;scrollbar-width:none}
+.tabsrow::-webkit-scrollbar{display:none}
+.tabsrow div{padding:6px 11px 7px!important;color:#fff!important;font-size:13px!important;border-radius:3px 3px 0 0;font-weight:400!important}
+.tabsrow div.on{background:#f3f3f3!important;color:var(--hlt)!important;font-weight:400!important}
+.tabsrow div.file{background:rgba(255,255,255,.18);margin-right:2px}
+.rib{background:#f3f3f3;border-bottom:1px solid #d0d0d0;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.rib .tb{padding:3px 2px 0!important;gap:0!important;align-items:stretch!important;overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap!important;background:#f3f3f3!important}
+.rib .tb::-webkit-scrollbar{display:none}
+.grp{display:flex;flex-direction:column;border-right:1px solid #dadada;padding:0 6px;flex:0 0 auto;justify-content:space-between}
+.grp:last-child{border-right:0}
+.gb{display:flex;align-items:flex-start;gap:3px;min-height:66px}
+.gl{font-size:11px;color:#666;text-align:center;padding:2px 0 3px;white-space:nowrap}
+.col{display:flex;flex-direction:column;gap:3px;justify-content:center;align-self:center}
+.r{display:flex;gap:2px;align-items:center}
+.rib button{height:26px;min-width:26px;border:1px solid transparent!important;background:transparent!important;border-radius:3px;font-size:13px;padding:0 5px;color:#222;white-space:nowrap}
+.rib button:active,.rib button.act{background:var(--hl)!important;border-color:#a9b9d6!important}
+.rib button.big{height:66px;min-width:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:11px;line-height:1.1;padding:2px 4px;white-space:normal;text-align:center}
+.rib button.big i{font-style:normal;font-size:26px;line-height:30px}
+.rib button.mid{height:30px;font-size:12px;padding:0 6px;display:flex;align-items:center;gap:4px}
+.rib button.mid i{font-style:normal;font-size:16px}
+.rib select{height:26px;border:1px solid #c6c6c6;background:#fff;border-radius:2px;font-size:12px;padding:0 2px;max-width:150px;color:#222}
+.rib select.sel-w{width:112px}.rib select.sel-n{width:52px}
+.rib input[type=color]{width:26px;height:26px;border:1px solid #c6c6c6;padding:1px;background:#fff;border-radius:2px}
+.rib .sep{display:none}
+.gal{display:flex;gap:3px;border:1px solid #c6c6c6;background:#fff;padding:3px;border-radius:2px;max-width:340px;overflow-x:auto;scrollbar-width:none}
+.gal::-webkit-scrollbar{display:none}
+.gal .gi{flex:0 0 auto;min-width:76px;height:58px;border:1px solid transparent;display:flex;flex-direction:column;justify-content:center;align-items:center;font-size:11px;color:#444;padding:2px 6px;border-radius:2px}
+.gal .gi b{font-weight:400;font-size:15px;color:#000;white-space:nowrap}
+.gal .gi:active{background:var(--hl);border-color:#a9b9d6}
+.gal .gi small{color:#555;font-size:10px}
+/* status bar with zoom */
+#status{background:#f3f3f3!important;color:#444!important;border-top:1px solid #d0d0d0;font-size:12px!important;padding:2px 8px!important;display:flex;align-items:center;gap:14px;justify-content:flex-start!important}
+#status .sp{flex:1}
+#status .zm{display:flex;align-items:center;gap:6px}
+#status .zm button{background:none;border:0;font-size:17px;line-height:1;padding:0 3px;color:#444}
+#status .zm input[type=range]{width:96px;height:4px;accent-color:#666}
+#status .zm span{min-width:38px;text-align:right}
+#status .vw{display:flex;gap:2px}
+#status .vw b{font-weight:400;border:1px solid transparent;padding:0 5px;border-radius:2px;color:#555}
+#status .vw b.on{background:#d9d9d9;border-color:#bbb}
+@media (max-width:420px){#status .zm input[type=range]{width:70px}#status .vw{display:none}}
+.cb{position:relative;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent;border-radius:3px;font-weight:600;font-size:15px}
+.cb input{position:absolute;inset:0;opacity:0;width:100%;height:100%;border:0;padding:0}
+.cb:active{background:var(--hl)}
+.cb b{display:block;line-height:16px;padding:0 3px;border-bottom:4px solid #f00;font-weight:600}
