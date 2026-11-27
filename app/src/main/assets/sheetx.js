@@ -8,8 +8,8 @@ function pushHist() { if (H.busy) return; const s = snap(); if (H.a[H.i] === s) 
 const _save0 = save;
 save = function () { _save0(); pushHist(); };
 function restoreSnap(s) { H.busy = true; try { const keep = cur; wb = E.Workbook.fromJSON(JSON.parse(s)); cur = wb.sheets[keep] ? keep : wb.order[0]; _save0(); renderTabs(); build(); } finally { H.busy = false; } }
-function undo() { if (editing) return; if (H.i <= 0) { $('stL').textContent = 'Nothing to undo'; return; } H.i--; restoreSnap(H.a[H.i]); $('stL').textContent = 'Undo'; }
-function redo() { if (editing) return; if (H.i >= H.a.length - 1) { $('stL').textContent = 'Nothing to redo'; return; } H.i++; restoreSnap(H.a[H.i]); $('stL').textContent = 'Redo'; }
+function undo() { if (editing) { const ec = editCell; if (ec && $('fx').value === String(wb.getRaw(ec.sheet, ec.r, ec.c))) cancelEdit(); else return; } if (H.i <= 0) { $('stL').textContent = 'Nothing to undo'; return; } H.i--; restoreSnap(H.a[H.i]); $('stL').textContent = 'Undo'; }
+function redo() { if (editing) { const ec = editCell; if (ec && $('fx').value === String(wb.getRaw(ec.sheet, ec.r, ec.c))) cancelEdit(); else return; } if (H.i >= H.a.length - 1) { $('stL').textContent = 'Nothing to redo'; return; } H.i++; restoreSnap(H.a[H.i]); $('stL').textContent = 'Redo'; }
 pushHist();
 const _refresh0 = refresh;
 refresh = function () { CFC = {}; _refresh0(); };
@@ -242,7 +242,7 @@ function jumpEdge(r, c, dr, dc) {
   while (inb(nr, nc) && !nonEmpty(nr, nc)) { nr += dr; nc += dc; } if (!inb(nr, nc)) { nr -= dr; nc -= dc; } return { r: nr, c: nc };
 }
 function moveKey(e, dr, dc) {
-  const ctrl = e.ctrlKey || e.metaKey; const cur0 = (e.shiftKey && FC && ((FC.r === sel.r1 || FC.r === sel.r2) && (FC.c === sel.c1 || FC.c === sel.c2))) ? FC : (e.shiftKey ? { r: anchor.r === sel.r1 ? sel.r2 : sel.r1, c: anchor.c === sel.c1 ? sel.c2 : sel.c1 } : { r: anchor.r, c: anchor.c });
+  const ctrl = e.ctrlKey || e.metaKey || CTRLH(); const cur0 = (e.shiftKey && FC && ((FC.r === sel.r1 || FC.r === sel.r2) && (FC.c === sel.c1 || FC.c === sel.c2))) ? FC : (e.shiftKey ? { r: anchor.r === sel.r1 ? sel.r2 : sel.r1, c: anchor.c === sel.c1 ? sel.c2 : sel.c1 } : { r: anchor.r, c: anchor.c });
   let n = ctrl ? jumpEdge(cur0.r, cur0.c, dr, dc) : { r: Math.max(1, Math.min(ROWS, cur0.r + dr)), c: Math.max(1, Math.min(COLS, cur0.c + dc)) };
   if (e.shiftKey) { FC = n; setSel(anchor.r, anchor.c, n.r, n.c); } else goCell(n.r, n.c);
 }
@@ -283,6 +283,13 @@ function shortcutsHelp() {
   gen('Keyboard shortcuts', '<table style="width:100%;font-size:13px;border-collapse:collapse">' + L.map(x => `<tr><td style="padding:3px 6px;border-bottom:1px solid #eee;white-space:nowrap"><b>${x[0]}</b></td><td style="padding:3px 6px;border-bottom:1px solid #eee">${x[1]}</td></tr>`).join('') + '</table>', []);
 }
 /* ---------------- Excel Keyboard Shortcuts Master Reference additions ---------------- */
+/* modifier tracking: some tablet/Bluetooth keyboards deliver the letter key without ctrlKey/altKey set,
+   so remember Control/Alt/Meta while they are physically down (or were released a split second ago). */
+let _mod = { c: false, a: false, cu: 0, au: 0 };
+const CTRLH = () => _mod.c, ALTH = () => _mod.a;
+window.addEventListener('keydown', e => { if (e.key === 'Control' || e.key === 'Meta') _mod.c = true; else if (e.key === 'Alt') _mod.a = true; }, true);
+window.addEventListener('keyup', e => { if (e.key === 'Control' || e.key === 'Meta') { _mod.c = false; _mod.cu = Date.now(); } else if (e.key === 'Alt') { _mod.a = false; _mod.au = Date.now(); } }, true);
+window.addEventListener('blur', () => { _mod.c = _mod.a = false; });
 let endMode = false, tipMode = false, tipSeq = '', visOnly = false, ribHidden = false;
 function stMsg(t) { try { $('stL').textContent = t; } catch (e) { } }
 function regionOf(r, c) {
@@ -343,7 +350,7 @@ function tipKey(e) {
   tipMode = false; tipSeq = ''; stMsg('Ready'); return true;
 }
 function xkeys(e, k, kl, ctrl, prevent) {
-  const sh_ = e.shiftKey, alt = e.altKey;
+  const sh_ = e.shiftKey, alt = e.altKey || (ALTH() && k !== 'Alt');
   if (dvMenuOn && dvMenuKey(e)) return true;
   if (tipMode && tipKey(e)) return true;
   if (k === 'Alt') { if (!e.repeat) { tipMode = true; tipSeq = ''; stMsg('Alt: press H Home, N Insert, P Page Layout, M Formulas, A Data, W View, F File'); } prevent(); return true; }
@@ -408,14 +415,14 @@ document.addEventListener('keydown', e => {
   if (PSD) { const k0 = e.key.toLowerCase(); const m = { a: 'all', f: 'formulas', v: 'values', t: 'formats', e: 'transpose', enter: 'all' }[k0]; if (e.key === 'Escape') { PSD = false; closeGen(); e.preventDefault(); return; } if (m) { e.preventDefault(); e.stopPropagation(); PSD = false; closeGen(); pasteSpecial(m); return; } }
   if (!modalOpen()) PSD = false;
   if (modalOpen()) return;
-  const ae = document.activeElement, inFx = ae === $('fx'), inField = /INPUT|TEXTAREA|SELECT/.test(ae.tagName), k = e.key, ctrl = e.ctrlKey || e.metaKey, kl = k.length === 1 ? k.toLowerCase() : k;
+  const ae = document.activeElement, inFx = ae === $('fx'), inField = /INPUT|TEXTAREA|SELECT/.test(ae.tagName), k = e.key, ctrl = e.ctrlKey || e.metaKey || (CTRLH() && k !== 'Control' && k !== 'Meta'), alt = e.altKey || (ALTH() && k !== 'Alt'), kl = k.length === 1 ? k.toLowerCase() : k;
   if (inFx) { if (ctrl && e.shiftKey && k === 'Enter') { e.preventDefault(); commitFx(0); return; } if (ctrl && k === 'Enter') { e.preventDefault(); const v = $('fx').value, s0 = Object.assign({}, sel); commitFx(0); for (let r = s0.r1; r <= s0.r2; r++) for (let c = s0.c1; c <= s0.c2; c++) wb.setRaw(cur, r, c, v); sel = s0; save(); refresh(); } return; }
   if (inField) return;
   const prevent = () => { e.preventDefault(); e.stopPropagation(); };
   if (xkeys(e, k, kl, ctrl, prevent)) return;
-  if (ctrl && e.altKey && kl === 'v') { prevent(); pasteSpecialDlg(); return; }
+  if (ctrl && alt && kl === 'v') { prevent(); pasteSpecialDlg(); return; }
   if (ctrl && e.shiftKey && kl === 'v') { prevent(); pasteValuesNow(); return; }
-  if (ctrl && !e.altKey) {
+  if (ctrl && !alt) {
     switch (kl) {
       case 'c': prevent(); copy(false); return; case 'x': prevent(); copy(true); return;
       case 'v': gotPaste = false; setTimeout(() => { if (!gotPaste && clip) paste(); }, 250); return;
@@ -442,7 +449,7 @@ document.addEventListener('keydown', e => {
     if (e.shiftKey && k === ' ') { }
     return;
   }
-  if (e.altKey) { if (k === '=') { prevent(); autosum(); } return; }
+  if (alt) { if (k === '=') { prevent(); autosum(); } return; }
   switch (k) {
     case 'ArrowUp': prevent(); moveKey(e, -1, 0); return; case 'ArrowDown': prevent(); moveKey(e, 1, 0); return;
     case 'ArrowLeft': prevent(); moveKey(e, 0, -1); return; case 'ArrowRight': prevent(); moveKey(e, 0, 1); return;
@@ -457,7 +464,7 @@ document.addEventListener('keydown', e => {
     case 'Escape': { const k0 = clip; PAINT = null; clip = null; if (k0 && window.repaintRng) repaintRng(k0.s); }  $('stL').textContent = 'Ready'; return;
     case ' ': if (e.shiftKey) { prevent(); selectRowCol('row'); return; } break;
   }
-  if (k.length === 1 && !e.altKey) { prevent(); startEdit(k); }
+  if (k.length === 1 && !alt) { prevent(); startEdit(k); }
 }, true);
 
 /* ---------------- copy/cut "marching ants" indicator ---------------- */
