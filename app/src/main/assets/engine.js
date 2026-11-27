@@ -177,7 +177,7 @@
       return null;
     }
     evalFormula(sheet, r, c, cell) {
-      if (!cell.ast) { try { cell.ast = parse(cell.f.slice(1)); } catch (e) { cell.ast = { t: 'err', v: isErr(e) ? e.code : '#NAME?' }; } }
+      if (!cell.ast) { try { cell.ast = parse((this.pre ? this.pre(sheet, r, c, cell.f) : cell.f).slice(1)); } catch (e) { cell.ast = { t: 'err', v: isErr(e) ? e.code : '#NAME?' }; } }
       const ctx = { sheet, r, c, wb: this, locals: {} };
       let v = evalNode(cell.ast, ctx);
       if (v instanceof Rng) { if (v.r1 === v.r2 && v.c1 === v.c2) return this.getVal(v.sheet || sheet, v.r1, v.c1); v = rngGrid(v, ctx); }
@@ -260,7 +260,7 @@
       }
       case 'fn': {
         const lazy = LAZY[n.n]; if (lazy) return lazy(n.a, ctx);
-        const fn = FN[n.n]; if (!fn) throw E('#NAME?');
+        const fn = FN[n.n]; if (!fn) { const nm = ctx.wb.names && ctx.wb.names[n.n]; if (nm) { const l = evalNode(parse(nm), ctx); if (l && l.lam) return callLam(l, n.a.map(x => evalNode(x, ctx))); } throw E('#NAME?'); }
         const args = n.a.map(a => evalNode(a, ctx));
         if (!RAW[n.n]) for (const a of args) { if (isErr(a)) throw a; }
         const r = fn(args, ctx); return r === undefined ? null : r;
@@ -275,8 +275,11 @@
   function fmtNumber(v, fmt) {
     if (isErr(v)) return v.code; if (v === null || v === undefined) return ''; if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE'; if (typeof v === 'string') return v;
     if (!fmt || fmt === 'General') return numStr(Math.abs(v) >= 1e11 || (Math.abs(v) < 1e-9 && v !== 0) ? +v.toPrecision(10) : +v.toPrecision(12) + 0);
-    const parts = fmt.split(';'); let f = parts[0]; let val = v;
+    let cf = null; const CRE = /\[(<=|>=|<>|<|>|=)\s*(-?[\d.]+)\]/;
+    if (CRE.test(fmt)) { const secs = fmt.split(';'); const cmpc = (o, b) => o === '<' ? v < b : o === '>' ? v > b : o === '<=' ? v <= b : o === '>=' ? v >= b : o === '=' ? v === b : v !== b; for (let i = 0; i < secs.length; i++) { const m = CRE.exec(secs[i]); if (!m || cmpc(m[1], +m[2])) { cf = secs[i].replace(CRE, ''); break; } } if (cf === null) cf = ''; }
+    const parts = cf !== null ? [cf] : fmt.split(';'); let f = parts[0]; let val = v;
     if (parts.length > 1 && v < 0) { f = parts[1]; val = -v; } else if (parts.length > 2 && v === 0) { f = parts[2]; }
+    { const sc = /([0#?])(,+)(?![0#?,])/.exec(f.replace(/"[^"]*"/g, m => 'Q'.repeat(m.length))); if (sc) { val = val / Math.pow(1000, sc[2].length); f = f.slice(0, sc.index + 1) + f.slice(sc.index + 1 + sc[2].length); } }
     f = f.replace(/\[\$[^\]]*\]/g, '').replace(/\[(Red|Blue|Green|Black|White|Yellow|Magenta|Cyan|Color\d+)\]/gi, '');
     if (f === '@') return String(v);
     if (/0E[+-]0+/i.test(f)) { const dec = ((/\.([0#]+)E/i.exec(f) || [, ''])[1]).length; if (val === 0) return (0).toFixed(dec) + 'E+00'; let ex = Math.floor(Math.log10(Math.abs(val))); let mt = val / Math.pow(10, ex); if (+Math.abs(mt).toFixed(dec) >= 10) { mt /= 10; ex++; } return (v < 0 && parts.length < 2 ? '-' : '') + Math.abs(mt).toFixed(dec) + 'E' + (ex < 0 ? '-' : '+') + String(Math.abs(ex)).padStart(2, '0'); }
@@ -543,6 +546,22 @@
 
   // ---------- public API ----------
   function evaluate(wb, sheet, formula) { const ctx = { sheet, r: 1, c: 1, wb, locals: {} }; wb._stack = wb._stack || new Set(); try { let v = evalNode(parse(formula[0] === '=' ? formula.slice(1) : formula), ctx); if (v instanceof Rng || Array.isArray(v)) v = grid(v, ctx)[0][0]; return v; } catch (e) { return isErr(e) ? e : E('#VALUE!'); } }
+  // ---------- LAMBDA family, MMULT, misc ----------
+  LAZY.LAMBDA = (a, c) => { const params = a.slice(0, -1).map(x => { if (x.t !== 'name') throw E('#VALUE!'); return x.v.toUpperCase(); }); return { lam: true, params, body: a[a.length - 1], ctx: c }; };
+  const callLam = (l, args) => { if (!l || !l.lam) throw E('#VALUE!'); const locals = Object.assign({}, l.ctx.locals); l.params.forEach((p, i) => { locals[p] = args[i] === undefined ? null : args[i]; }); const c2 = Object.assign({}, l.ctx, { locals }); const v = evalNode(l.body, c2); if (v instanceof Rng) return scalar(v, c2); return v; };
+  const arr2 = (v, c) => { const g = grid(v, c); return g; };
+  LAZY.MAP = (a, c) => { const lam = evalNode(a[a.length - 1], c); const gs = a.slice(0, -1).map(x => arr2(evalNode(x, c), c)); const R = gs[0].length, C = gs[0][0].length; const o = []; for (let i = 0; i < R; i++) { const row = []; for (let j = 0; j < C; j++) { let v; try { v = callLam(lam, gs.map(g => g[i] && g[i][j])); } catch (e) { v = isErr(e) ? e : E('#VALUE!'); } row.push(Array.isArray(v) ? v[0][0] : v); } o.push(row); } return o; };
+  LAZY.REDUCE = (a, c) => { const lam = evalNode(a[2], c); let acc = a[0].t === 'empty' ? 0 : evalNode(a[0], c); const g = arr2(evalNode(a[1], c), c); for (const row of g) for (const v of row) acc = callLam(lam, [acc, v]); return acc; };
+  LAZY.SCAN = (a, c) => { const lam = evalNode(a[2], c); let acc = a[0].t === 'empty' ? 0 : evalNode(a[0], c); const g = arr2(evalNode(a[1], c), c); return g.map(row => row.map(v => { acc = callLam(lam, [acc, v]); return acc; })); };
+  LAZY.BYROW = (a, c) => { const lam = evalNode(a[1], c); return arr2(evalNode(a[0], c), c).map(row => [callLam(lam, [[row]])]); };
+  LAZY.BYCOL = (a, c) => { const lam = evalNode(a[1], c); const g = arr2(evalNode(a[0], c), c); return [g[0].map((_, j) => callLam(lam, [g.map(r => [r[j]])]))]; };
+  LAZY.MAKEARRAY = (a, c) => { const R = toNum(scalar(evalNode(a[0], c), c)), C = toNum(scalar(evalNode(a[1], c), c)), lam = evalNode(a[2], c); const o = []; for (let i = 1; i <= R; i++) { const row = []; for (let j = 1; j <= C; j++) row.push(callLam(lam, [i, j])); o.push(row); } return o; };
+  def('MMULT', (a, c) => { const A = grid(a[0], c), B = grid(a[1], c); if (A[0].length !== B.length) throw E('#VALUE!'); return A.map(r => B[0].map((_, j) => r.reduce((s, v, k) => s + toNum(v) * toNum(B[k][j]), 0))); });
+  def('FORMULATEXT', (a, c) => { const x = a[0]; if (!(x instanceof Rng)) throw E('#N/A'); const b = rngBounds(x, c); const raw = c.wb.getRaw(b.sheet, b.r1, b.c1); if (typeof raw === 'string' && raw[0] === '=') return raw; throw E('#N/A'); }, true);
+  def('ISOWEEKNUM', (a, c) => { const d = serialToDate(Math.floor(num(a[0], c))); const t = new Date(Date.UTC(d.y, d.m - 1, d.d)); const day = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - day); const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil(((t - y0) / 86400000 + 1) / 7); });
+  def('YEARFRAC', (a, c) => { let s = num(a[0], c), e = num(a[1], c); const basis = a.length > 2 && a[2] !== null ? num(a[2], c) : 0; if (s > e) [s, e] = [e, s]; const d1 = serialToDate(Math.floor(s)), d2 = serialToDate(Math.floor(e)); if (basis === 0 || basis === 4) { let D1 = Math.min(d1.d, 30), D2 = d2.d; if (D2 === 31 && D1 === 30) D2 = 30; return ((d2.y - d1.y) * 360 + (d2.m - d1.m) * 30 + (D2 - D1)) / 360; } if (basis === 2) return (e - s) / 360; if (basis === 3) return (e - s) / 365; return (e - s) / 365.25; });
+  def('EXPAND', (a, c) => { const g = grid(a[0], c), R = num(a[1], c), C = a.length > 2 && a[2] !== null ? num(a[2], c) : g[0].length, pad = a.length > 3 ? scalar(a[3], c) : E('#N/A'); const o = []; for (let i = 0; i < Math.max(R, g.length); i++) { const row = []; for (let j = 0; j < Math.max(C, g[0].length); j++) row.push(g[i] && g[i][j] !== undefined ? g[i][j] : pad); o.push(row); } return o; });
+  def('WRAPCOLS', (a, c) => { const v = grid(a[0], c).flat(), n = num(a[1], c), pad = a.length > 2 ? scalar(a[2], c) : E('#N/A'); const cols = Math.ceil(v.length / n); const o = []; for (let i = 0; i < n; i++) { const row = []; for (let j = 0; j < cols; j++) { const x = v[j * n + i]; row.push(x === undefined ? pad : x); } o.push(row); } return o; });
   const api = { Workbook, XErr, Rng, isErr, parse, evaluate, fmtNumber, colToNum, numToCol, parseAddr, addr, toNum, toStr, toBool, numStr, dateToSerial, serialToDate, FN, E };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Engine = api;
 })(typeof window !== 'undefined' ? window : globalThis);
