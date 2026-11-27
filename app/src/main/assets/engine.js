@@ -209,8 +209,8 @@
     }
     // display value (computed)
     value(sheet, r, c) { try { return this.getVal(sheet, r, c); } catch (e) { return isErr(e) ? e : E('#VALUE!'); } }
-    toJSON() { const o = { order: this.order, sheets: {} }; for (const n of this.order) { const sh = this.sheets[n]; const cells = {}; for (const k in sh.cells) { const c = sh.cells[k]; cells[k] = c.f ? c.f : c.v; } o.sheets[n] = { cells, fmt: sh.fmt, style: sh.style, colW: sh.colW, rowH: sh.rowH, merges: sh.merges || [], cf: sh.cf || [], frz: sh.frz || null, hid: sh.hid || {}, flt: sh.flt || {}, defSz: sh.defSz, defFont: sh.defFont, grid: sh.grid, dv: sh.dv || [] }; } return o; }
-    static fromJSON(o) { const wb = new Workbook(); wb.sheets = {}; wb.order = []; for (const n of o.order) { const sh = wb.addSheet(n); const s = o.sheets[n]; for (const k in s.cells) { const v = s.cells[k]; sh.cells[k] = (typeof v === 'string' && v[0] === '=') ? { f: v } : { v }; } sh.fmt = s.fmt || {}; sh.style = s.style || {}; sh.colW = s.colW || {}; sh.rowH = s.rowH || {}; sh.merges = s.merges || []; sh.cf = s.cf || []; sh.frz = s.frz || null; sh.hid = s.hid || {}; sh.flt = s.flt || {}; sh.defSz = s.defSz; sh.defFont = s.defFont; sh.grid = s.grid; sh.dv = s.dv || []; } if (!wb.order.length) wb.addSheet('Sheet1'); return wb; }
+    toJSON() { const o = { order: this.order, sheets: {} }; for (const n of this.order) { const sh = this.sheets[n]; const cells = {}; for (const k in sh.cells) { const c = sh.cells[k]; cells[k] = c.f ? c.f : c.v; } o.sheets[n] = { cells, fmt: sh.fmt, style: sh.style, colW: sh.colW, rowH: sh.rowH, merges: sh.merges || [], cf: sh.cf || [], frz: sh.frz || null, hid: sh.hid || {}, flt: sh.flt || {}, defSz: sh.defSz, defFont: sh.defFont, grid: sh.grid, dv: sh.dv || [], ext: sh.ext || {} }; } return o; }
+    static fromJSON(o) { const wb = new Workbook(); wb.sheets = {}; wb.order = []; for (const n of o.order) { const sh = wb.addSheet(n); const s = o.sheets[n]; for (const k in s.cells) { const v = s.cells[k]; sh.cells[k] = (typeof v === 'string' && v[0] === '=') ? { f: v } : { v }; } sh.fmt = s.fmt || {}; sh.style = s.style || {}; sh.colW = s.colW || {}; sh.rowH = s.rowH || {}; sh.merges = s.merges || []; sh.cf = s.cf || []; sh.frz = s.frz || null; sh.hid = s.hid || {}; sh.flt = s.flt || {}; sh.defSz = s.defSz; sh.defFont = s.defFont; sh.grid = s.grid; sh.dv = s.dv || []; sh.ext = s.ext || {}; } if (!wb.order.length) wb.addSheet('Sheet1'); return wb; }
   }
 
   // ---------- evaluation ----------
@@ -335,6 +335,7 @@
   const vecMap = (a, ctx, fn) => mapArr(a, fn, ctx);
 
   // math
+  def('HYPERLINK', (a, c) => (a.length > 1 ? scalar(a[1], c) : scalar(a[0], c)), true);
   def('SUM', (a, c) => flatNums(a, c).reduce((x, y) => x + y, 0));
   def('AVERAGE', (a, c) => { const v = flatNums(a, c); if (!v.length) throw E('#DIV/0!'); return v.reduce((x, y) => x + y, 0) / v.length; });
   def('MIN', (a, c) => { const v = flatNums(a, c); return v.length ? Math.min(...v) : 0; });

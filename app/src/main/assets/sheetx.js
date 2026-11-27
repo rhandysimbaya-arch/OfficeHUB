@@ -385,8 +385,8 @@ function xkeys(e, k, kl, ctrl, prevent) {
     if (k === '&') { prevent(); bordersSel('outside'); return true; }
     if (k === '_') { prevent(); const S = sel; for (const side of ['bt', 'bb']) for (let c = S.c1; c <= S.c2; c++) setSide(side === 'bt' ? S.r1 : S.r2, c, side, null); for (const side of ['bl', 'br']) for (let r = S.r1; r <= S.r2; r++) setSide(r, side === 'bl' ? S.c1 : S.c2, side, null); save(); refresh(); return true; }
     if (k === 'F1') { prevent(); ribHidden = !ribHidden; const rb = $('rib'); if (rb) rb.style.display = ribHidden ? 'none' : ''; return true; }
-    if (k === 'F3' && !sh_) { prevent(); stMsg('Names: type a name in the Name Box (left of the formula bar) to define one'); return true; }
-    if (k === 'F3' && sh_) { prevent(); stMsg('Names: type a name in the Name Box to define one'); return true; }
+    if (k === 'F3' && !sh_) { prevent(); nameMgr(); return true; }
+    if (k === 'F3' && sh_) { prevent(); nameFromSel(); return true; }
     if (k === 'Home' && sh_) { prevent(); FC = { r: 1, c: 1 }; setSel(anchor.r, anchor.c, 1, 1); return true; }
     if (k === 'End' && sh_) { prevent(); const u = lastUsed(); FC = u; setSel(anchor.r, anchor.c, u.r, u.c); return true; }
     if (k === 'Tab') return false;
@@ -403,9 +403,9 @@ function xkeys(e, k, kl, ctrl, prevent) {
     if (k === 'F9') { prevent(); refresh(); stMsg(sh_ ? 'Calculated active sheet' : 'Calculated all sheets'); return true; }
     if (k === 'F11' && sh_) { prevent(); addSheet(); return true; }
     if (k === 'F11') { prevent(); if (sel.r1 !== sel.r2 || sel.c1 !== sel.c2) addChart('bar'); else stMsg('Select the data range first'); return true; }
-    if (k === 'F3' && sh_) { prevent(); startEdit('='); return true; }
+    if (k === 'F3' && sh_) { prevent(); fnPick(); return true; } if (k === 'F3') { prevent(); namePaste(); return true; }
     if (k === 'F4') { prevent(); stMsg('F4 cycles $ references while editing a formula'); return true; }
-    if (k === 'F2' && sh_) { prevent(); stMsg('Notes/comments are not supported yet'); return true; }
+    if (k === 'F2' && sh_) { prevent(); noteDlg(); return true; }
     if (k === 'F7') { prevent(); stMsg('Spell check is not available'); return true; }
     if (k === 'F6') { prevent(); const f = $('nm'); f.focus(); f.select(); return true; }
   }
@@ -433,8 +433,8 @@ document.addEventListener('keydown', e => {
       case 'd': prevent(); fill('d'); return; case 'r': prevent(); fill('r'); return;
       case 'f': case 'h': prevent(); findRep(); return;
       case 's': prevent(); saveX(); return; case 'o': prevent(); openFile(); return;
-      case 'g': prevent(); $('nm').focus(); $('nm').select(); return;
-      case 'k': prevent(); return;
+      case 'g': prevent(); if (typeof gotoDlg === 'function') gotoDlg(); else { $('nm').focus(); $('nm').select(); } return;
+      case 'k': prevent(); if (typeof linkDlg === 'function') linkDlg(); return;
       case '1': if (e.shiftKey) { } else { prevent(); formatCellsDlg(); return; } break;
       case '!': prevent(); nfmt('#,##0.00'); return; case '@': prevent(); nfmt('h:mm AM/PM'); return; case '#': prevent(); nfmt('d-mmm-yy'); return;
       case '$': prevent(); nfmt('$#,##0.00'); return; case '%': prevent(); nfmt('0%'); return; case '^': prevent(); nfmt('0.00E+00'); return; case '~': prevent(); nfmt(''); return;
@@ -460,7 +460,7 @@ document.addEventListener('keydown', e => {
     case 'End': prevent(); return;
     case 'PageDown': prevent(); goCell(anchor.r + 20, anchor.c); return; case 'PageUp': prevent(); goCell(anchor.r - 20, anchor.c); return;
     case 'F2': prevent(); startEdit(String(wb.getRaw(cur, anchor.r, anchor.c)), false); return;
-    case 'F5': prevent(); $('nm').focus(); $('nm').select(); return;
+    case 'F5': prevent(); if (typeof gotoDlg === 'function') gotoDlg(); else { $('nm').focus(); $('nm').select(); } return;
     case 'Delete': case 'Backspace': prevent(); clearSel(); return;
     case 'Escape': { const k0 = clip; PAINT = null; clip = null; if (k0 && window.repaintRng) repaintRng(k0.s); }  $('stL').textContent = 'Ready'; return;
     case ' ': if (e.shiftKey) { prevent(); selectRowCol('row'); return; } break;

@@ -13,14 +13,14 @@ html,body{font-family:"Segoe UI",Roboto,Arial,sans-serif}
 .tabsrow div.on{background:#f3f3f3!important;color:var(--hlt)!important;font-weight:400!important}
 .tabsrow div.file{background:rgba(255,255,255,.18);margin-right:2px}
 .rib{background:#f3f3f3;border-bottom:1px solid #d0d0d0;box-shadow:0 1px 2px rgba(0,0,0,.08)}
-.rib .tb{padding:3px 2px 0!important;gap:0!important;align-items:stretch!important;overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap!important;background:#f3f3f3!important}
+.rib .tb{padding:3px 2px 0!important;gap:0!important;align-items:stretch!important;overflow-x:hidden;overflow-y:auto;max-height:42vh;scrollbar-width:thin;flex-wrap:wrap!important;background:#f3f3f3!important}
 .rib .tb::-webkit-scrollbar{display:none}
-.grp{display:flex;flex-direction:column;border-right:1px solid #dadada;padding:0 6px;flex:0 0 auto;justify-content:space-between}
+.grp{display:flex;flex-direction:column;border-right:1px solid #dadada;border-bottom:1px solid #e4e4e4;padding:0 6px;flex:0 1 auto;justify-content:space-between;max-width:100%}
 .grp:last-child{border-right:0}
 .gb{display:flex;align-items:flex-start;gap:3px;min-height:66px}
 .gl{font-size:11px;color:#666;text-align:center;padding:2px 0 3px;white-space:nowrap}
 .col{display:flex;flex-direction:column;gap:3px;justify-content:center;align-self:center}
-.r{display:flex;gap:2px;align-items:center}
+.r{display:flex;gap:2px;align-items:center;flex-wrap:wrap}
 .rib button{height:26px;min-width:26px;border:1px solid transparent!important;background:transparent!important;border-radius:3px;font-size:13px;padding:0 5px;color:#222;white-space:nowrap}
 .rib button:active,.rib button.act{background:var(--hl)!important;border-color:#a9b9d6!important}
 .rib button.big{height:66px;min-width:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:11px;line-height:1.1;padding:2px 4px;white-space:normal;text-align:center}
@@ -31,7 +31,7 @@ html,body{font-family:"Segoe UI",Roboto,Arial,sans-serif}
 .rib select.sel-w{width:112px}.rib select.sel-n{width:52px}
 .rib input[type=color]{width:26px;height:26px;border:1px solid #c6c6c6;padding:1px;background:#fff;border-radius:2px}
 .rib .sep{display:none}
-.gal{display:flex;gap:3px;border:1px solid #c6c6c6;background:#fff;padding:3px;border-radius:2px;max-width:340px;overflow-x:auto;scrollbar-width:none}
+.gal{display:flex;flex-wrap:wrap;gap:3px;border:1px solid #c6c6c6;background:#fff;padding:3px;border-radius:2px;max-width:340px;max-height:66px;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin}
 .gal::-webkit-scrollbar{display:none}
 .gal .gi{flex:0 0 auto;min-width:76px;height:58px;border:1px solid transparent;display:flex;flex-direction:column;justify-content:center;align-items:center;font-size:11px;color:#444;padding:2px 6px;border-radius:2px}
 .gal .gi b{font-weight:400;font-size:15px;color:#000;white-space:nowrap}
