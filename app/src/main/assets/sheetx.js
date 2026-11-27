@@ -246,7 +246,8 @@ function moveKey(e, dr, dc) {
   let n = ctrl ? jumpEdge(cur0.r, cur0.c, dr, dc) : { r: Math.max(1, Math.min(ROWS, cur0.r + dr)), c: Math.max(1, Math.min(COLS, cur0.c + dc)) };
   if (e.shiftKey) { FC = n; setSel(anchor.r, anchor.c, n.r, n.c); } else goCell(n.r, n.c);
 }
-function startEdit(text) { const f = $('fx'); f.focus(); if (text !== undefined) f.value = text; const n = f.value.length; try { f.setSelectionRange(n, n); } catch (e) { } editing = true; editCell = { sheet: cur, r: anchor.r, c: anchor.c }; }
+let enterMode = false;
+function startEdit(text, enter) { const f = $('fx'); f.focus(); if (text !== undefined) f.value = text; const n = f.value.length; try { f.setSelectionRange(n, n); } catch (e) { } editing = true; editCell = { sheet: cur, r: anchor.r, c: anchor.c }; enterMode = !!enter; liveCell(); }
 function cycleAbs() {
   const f = $('fx'); const v = f.value, p = f.selectionStart; const re = /\$?[A-Z]{1,3}\$?\d+/gi; let m, hit = null; while ((m = re.exec(v))) { if (p >= m.index && p <= m.index + m[0].length) { hit = m; break; } } if (!hit) return;
   const mm = /(\$?)([A-Z]{1,3})(\$?)(\d+)/i.exec(hit[0]); const st = (mm[1] ? 1 : 0) + (mm[3] ? 2 : 0); const nx = [[1, 1], [0, 1], [1, 0], [0, 0]]; const cyc = { 3: [0, 1], 2: [0, 0], 1: [1, 1], 0: [1, 0] }; // $A$1 -> A$1 -> $A1 -> A1 -> $A$1
@@ -458,13 +459,13 @@ document.addEventListener('keydown', e => {
     case 'Home': prevent(); goCell(anchor.r, 1); return;
     case 'End': prevent(); return;
     case 'PageDown': prevent(); goCell(anchor.r + 20, anchor.c); return; case 'PageUp': prevent(); goCell(anchor.r - 20, anchor.c); return;
-    case 'F2': prevent(); startEdit(String(wb.getRaw(cur, anchor.r, anchor.c))); return;
+    case 'F2': prevent(); startEdit(String(wb.getRaw(cur, anchor.r, anchor.c)), false); return;
     case 'F5': prevent(); $('nm').focus(); $('nm').select(); return;
     case 'Delete': case 'Backspace': prevent(); clearSel(); return;
     case 'Escape': { const k0 = clip; PAINT = null; clip = null; if (k0 && window.repaintRng) repaintRng(k0.s); }  $('stL').textContent = 'Ready'; return;
     case ' ': if (e.shiftKey) { prevent(); selectRowCol('row'); return; } break;
   }
-  if (k.length === 1 && !alt) { prevent(); startEdit(k); }
+  if (k.length === 1 && !alt) { prevent(); startEdit(k, true); }
 }, true);
 
 /* ---------------- copy/cut "marching ants" indicator ---------------- */
@@ -477,7 +478,12 @@ function repaintRng(s) { for (let r = s.r1; r <= Math.min(s.r2, ROWS); r++) for 
 const _copy2 = copy;
 copy = function (cut) { const old = clip && clip.ants ? clip.s : null; _copy2(cut); if (clip) clip.ants = true; if (old) repaintRng(old); if (clip) repaintRng(clip.s); };
 const _paste2 = paste;
-paste = function () { const k = clip; _paste2(); if (k) { k.ants = false; repaintRng(k.s); } };
+paste = function () {
+  const k = clip;
+  if (k && !k.cut) { const h = k.s.r2 - k.s.r1 + 1, w = k.s.c2 - k.s.c1 + 1, sh_ = sel.r2 - sel.r1 + 1, sw = sel.c2 - sel.c1 + 1;
+    if ((sh_ > h || sw > w) && sh_ % h === 0 && sw % w === 0 && (sh_ / h) * (sw / w) <= 400) { const a0 = Object.assign({}, anchor), s0 = Object.assign({}, sel); for (let r = s0.r1; r <= s0.r2; r += h) for (let c = s0.c1; c <= s0.c2; c += w) { anchor = { r, c }; _paste2(); } anchor = a0; sel = s0; k.ants = false; refresh(); return; } }
+  _paste2(); if (k) { k.ants = false; repaintRng(k.s); }
+};
 const _pasteSp2 = pasteSpecial;
 pasteSpecial = function (m) { const k = clip; _pasteSp2(m); if (k) { k.ants = false; repaintRng(k.s); } };
 
@@ -628,3 +634,57 @@ function dvClear() {
   const part = S.dv.some(q => inter(q) && !cov(q)); S.dv = S.dv.filter(q => !cov(q)); if (part) S.dv.push({ r1: sel.r1, c1: sel.c1, r2: sel.r2, c2: sel.c2, type: 'any', op: 'between', v1: '', v2: '', blank: true });
   save(); closeGen(); refresh(); dvUpdate();
 }
+
+/* ---------------- live typing in the cell, arrow-to-commit, reference shifting, auto-uppercase ---------------- */
+function liveCell() {
+  if (!editing || !editCell || editCell.sheet !== cur) return; const td = tds[editCell.r] && tds[editCell.r][editCell.c]; if (!td) return;
+  td.textContent = $('fx').value; td.classList.add('typing');
+}
+const _fxInput2 = fxInput; fxInput = function () { _fxInput2(); liveCell(); };
+const _pointTo2 = pointTo; pointTo = function (r, c, ext) { _pointTo2(r, c, ext); liveCell(); };
+const _cancelEdit2 = cancelEdit; cancelEdit = function () { const ec = editCell; enterMode = false; _cancelEdit2(); if (ec && ec.sheet === cur) paint(ec.r, ec.c); };
+const _fxFocus2 = fxFocus; fxFocus = function () { if (!editing) enterMode = false; _fxFocus2(); };
+const _fxKey2 = fxKey;
+fxKey = function (e) {
+  if (editing && enterMode && /^Arrow(Up|Down|Left|Right)$/.test(e.key) && !canPoint()) {
+    e.preventDefault(); const dr = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0, dc = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+    enterMode = false; commitFx(0); goCell(anchor.r + dr, anchor.c + dc); return;
+  }
+  _fxKey2(e);
+};
+function shiftFormula0(f, dr, dc) {
+  let out = '', i = 0; const n = f.length;
+  while (i < n) {
+    const ch = f[i];
+    if (ch === '"') { let j = i + 1; while (j < n) { if (f[j] === '"') { if (f[j + 1] === '"') { j += 2; continue; } break; } j++; } out += f.slice(i, j + 1); i = j + 1; continue; }
+    if (ch === "'") { let j = f.indexOf("'", i + 1); if (j < 0) j = n - 1; out += f.slice(i, j + 1); i = j + 1; continue; }
+    if (/[A-Za-z_$]/.test(ch)) {
+      let j = i; while (j < n && /[A-Za-z0-9_$.]/.test(f[j])) j++; const tok = f.slice(i, j); const m = /^(\$?)([A-Za-z]{1,3})(\$?)(\d+)$/.exec(tok);
+      if (m && f[j] !== '(' && f[j] !== '!') { const col = m[1] ? m[2].toUpperCase() : E.numToCol(Math.max(1, E.colToNum(m[2]) + dc)); const row = m[3] ? m[4] : String(Math.max(1, +m[4] + dr)); out += m[1] + col + m[3] + row; }
+      else out += tok; i = j; continue;
+    }
+    out += ch; i++;
+  }
+  return out;
+}
+shiftFormula = shiftFormula0;
+function normFormula(f) {
+  if (typeof f !== 'string' || f[0] !== '=') return f; let out = '', i = 0; const n = f.length;
+  while (i < n) {
+    const ch = f[i];
+    if (ch === '"') { let j = i + 1; while (j < n) { if (f[j] === '"') { if (f[j + 1] === '"') { j += 2; continue; } break; } j++; } out += f.slice(i, j + 1); i = j + 1; continue; }
+    if (ch === "'") { let j = f.indexOf("'", i + 1); if (j < 0) j = n - 1; out += f.slice(i, j + 1); i = j + 1; continue; }
+    if (/[A-Za-z_$]/.test(ch)) {
+      let j = i; while (j < n && /[A-Za-z0-9_$.]/.test(f[j])) j++; const tok = f.slice(i, j);
+      if (f[j] === '(' && /^[A-Za-z][A-Za-z0-9.]*$/.test(tok) && E.FN && E.FN[tok.toUpperCase()]) out += tok.toUpperCase();
+      else if (f[j] !== '(' && f[j] !== '!' && /^\$?[A-Za-z]{1,3}\$?\d+$/.test(tok)) out += tok.toUpperCase();
+      else if (/^(true|false)$/i.test(tok) && f[j] !== '(') out += tok.toUpperCase();
+      else out += tok; i = j; continue;
+    }
+    out += ch; i++;
+  }
+  return out;
+}
+/* uppercase refs/functions when an entry is finalised (wrapped around the validation wrapper) */
+const _commitFx3 = commitFx;
+commitFx = function (move) { if (editing || editCell) { const f = $('fx'); const v = f.value; const nv = normFormula(v); if (nv !== v) f.value = nv; } _commitFx3(move); };
