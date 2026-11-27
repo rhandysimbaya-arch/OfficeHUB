@@ -112,14 +112,15 @@ const IMG = (function () {
       busy = false;
     });
   }
-  function fmt() { const f = $('im-fmt').value; return { mime: f === 'jpg' ? 'image/jpeg' : 'image/png', ext: f }; }
-  function blobOf(cv) { const f = fmt(); return new Promise(r => cv.toBlob(r, f.mime, 0.92)); }
+  function fmt() { const f = $('im-fmt').value; return { mime: f === 'jpg' ? 'image/jpeg' : f === 'pdf' ? 'application/pdf' : 'image/png', ext: f }; }
+  function blobOf(cv) { const f = fmt(); if (f.ext === 'pdf') return TOOLS.canvasesToPdf([cv]); return new Promise(r => cv.toBlob(r, f.mime, 0.92)); }
   function show() {
     const g = $('im-grid'); g.innerHTML = '';
     pages.forEach((cv, i) => { const d = document.createElement('div'); d.style.cssText = 'background:#fff;border-radius:8px;padding:6px;box-shadow:0 1px 3px rgba(0,0,0,.2);text-align:center'; const im = document.createElement('img'); im.style.cssText = 'width:100%;border:1px solid #ddd'; im.src = cv.toDataURL('image/jpeg', 0.5); d.appendChild(im); const b = document.createElement('button'); b.textContent = 'Save #' + (i + 1); b.style.cssText = 'margin-top:6px;padding:6px 10px;border:0;border-radius:6px;background:#0f766e;color:#fff;font-size:12px'; b.onclick = async () => RB.saveBlob(baseName + '_' + (i + 1) + '.' + fmt().ext, await blobOf(cv), fmt().mime); d.appendChild(b); g.appendChild(d); });
     $('im-actions').style.display = pages.length ? 'block' : 'none';
   }
   async function saveAll() {
+    if (fmt().ext === 'pdf') { RB.saveBlob(baseName + '.pdf', await TOOLS.canvasesToPdf(pages), 'application/pdf'); return; }
     if (pages.length === 1) { RB.saveBlob(baseName + '.' + fmt().ext, await blobOf(pages[0]), fmt().mime); return; }
     const z = new JSZip(); for (let i = 0; i < pages.length; i++) z.file(baseName + '_' + String(i + 1).padStart(2, '0') + '.' + fmt().ext, await blobOf(pages[i]));
     RB.saveBlob(baseName + '_images.zip', await z.generateAsync({ type: 'blob' }), 'application/zip');

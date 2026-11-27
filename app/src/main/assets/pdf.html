@@ -3,8 +3,8 @@
 <style>
 body{background:#f1f3f5}
 .wrap{padding:12px;max-width:640px;margin:auto}
-.tabs{display:flex;gap:6px;margin-bottom:12px}
-.tabs button{flex:1;padding:12px 4px;border:0;border-radius:10px;background:#fff;font-size:13px;font-weight:600;color:#444;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.tabs button{flex:1 1 30%;padding:12px 4px;border:0;border-radius:10px;background:#fff;font-size:13px;font-weight:600;color:#444;box-shadow:0 1px 3px rgba(0,0,0,.15)}
 .tabs button.on{color:#fff}
 .card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .btn{display:block;width:100%;padding:13px;border:0;border-radius:10px;color:#fff;font-size:15px;font-weight:600;margin-top:8px}
@@ -24,21 +24,32 @@ input[type=text],select{width:100%;padding:9px;border:1px solid #c8ccd0;border-r
   <button id="t-word" onclick="setMode('word')">PDF &rarr; Word</button>
   <button id="t-excel" onclick="setMode('excel')">PDF &rarr; Excel</button>
   <button id="t-ppt" onclick="setMode('ppt')">PDF &rarr; PowerPoint</button>
-  <button id="t-img" onclick="setMode('img')">Office &rarr; Image</button>
+  <button id="t-img" onclick="setMode('img')">Office &rarr; Image/PDF</button>
+  <button id="t-tools" onclick="setMode('tools')">PDF Tools</button>
  </div>
  <div class="card" id="pdfcard">
   <button class="btn" id="pick" style="background:#555" onclick="pickPdf()">Choose PDF file</button>
   <div id="fname" class="note">No file chosen</div>
+  <label>Scanned PDF / OCR</label><select id="ocr-mode"><option value="auto">Auto (OCR only pages with no text)</option><option value="always">Always OCR (scans, images, broken text)</option><option value="off">Off</option></select>
   <label>Pages (blank = all, e.g. 1-3,5)</label><input type="text" id="range" placeholder="all pages">
   <div class="opt" id="o-excel"><label>Excel layout</label><select id="xl-layout"><option value="one">All pages in one sheet</option><option value="per">One sheet per page</option></select></div>
   <div class="opt" id="o-ppt"><label>PowerPoint slides</label><select id="pp-mode"><option value="text">Editable text boxes (text only)</option><option value="image">Picture of each page (looks identical)</option></select></div>
   <button class="btn" id="go" onclick="convert()" disabled>Convert</button>
   <div class="prog" id="prog"><i id="bar"></i></div><div id="status"></div>
  </div>
-<div class="card" id="imgcard" style="display:none">
+<div class="card" id="toolcard" style="display:none">
+  <label>Tool</label><select id="tl-sel" onchange="TOOLS.setTool(this.value)"><option value="merge">Merge PDFs</option><option value="split">Split / extract / rotate pages</option><option value="img2pdf">Images to PDF</option><option value="pdf2txt">PDF to Text</option></select>
+  <div id="tl-info" class="note"></div>
+  <div id="tl-split" style="display:none"><label>Pages (e.g. 1-3,5; blank = all)</label><input type="text" id="tl-range"><label>Output</label><select id="tl-smode"><option value="one">One PDF with these pages</option><option value="each">Each page as its own PDF (ZIP)</option></select><label>Rotate</label><select id="tl-rot"><option value="0">None</option><option value="90">90&deg; clockwise</option><option value="180">180&deg;</option><option value="270">90&deg; counter-clockwise</option></select></div>
+  <button class="btn" id="tl-add" style="background:#555" onclick="TOOLS.add()">Add file</button>
+  <div id="tl-list"></div>
+  <button class="btn" style="background:#475569" onclick="TOOLS.run()">Run</button>
+  <div id="tl-status" class="note"></div>
+ </div>
+ <div class="card" id="imgcard" style="display:none">
   <button class="btn" style="background:#0f766e" onclick="IMG.pick()">Choose Word / Excel / PowerPoint / PDF file</button>
   <div id="im-fname" class="note">No file chosen</div>
-  <label>Image format</label><select id="im-fmt"><option value="png">PNG</option><option value="jpg">JPG</option></select>
+  <label>Image format</label><select id="im-fmt"><option value="png">PNG</option><option value="jpg">JPG</option><option value="pdf">PDF (one file)</option></select>
   <label>Quality</label><select id="im-scale"><option value="1">Normal (1x)</option><option value="2">High (2x)</option></select>
   <div id="im-status" class="note"></div>
   <div id="im-actions" style="display:none"><button class="btn" style="background:#0f766e" onclick="IMG.saveAll()">Save all (ZIP if several)</button></div>
@@ -49,9 +60,9 @@ input[type=text],select{width:100%;padding:9px;border:1px solid #c8ccd0;border-r
   <button class="btn" id="dl" onclick="download()">Download file</button>
   <button class="btn sec" id="openapp" onclick="openInApp()">Open in editor</button>
  </div>
- <div class="note">Works with text-based PDFs. Scanned PDFs (photos of pages) have no text to extract &mdash; use &ldquo;Picture of each page&rdquo; for PowerPoint. Tables are detected from aligned columns, so complex layouts may need a little cleanup.</div>
+ <div class="note">Scanned PDFs are read with built-in offline OCR (English). Tables are detected from aligned columns, so complex layouts may need a little cleanup.</div>
 </div>
 <script src="libs/jszip.min.js"></script><script src="libs/xlsx.full.min.js"></script><script src="libs/pptxgen.bundle.js"></script>
-<script src="libs/pdf.worker.min.js"></script><script src="libs/pdf.min.js"></script>
-<script src="libs/mammoth.browser.min.js"></script><script src="common.js"></script><script src="docxlib.js"></script><script src="officeimg.js"></script><script src="pdfconv.js"></script>
+<script src="libs/pdf-lib.min.js"></script><script src="libs/pdf.worker.min.js"></script><script src="libs/pdf.min.js"></script>
+<script src="libs/mammoth.browser.min.js"></script><script src="common.js"></script><script src="docxlib.js"></script><script src="ocr.js"></script><script src="pdftools.js"></script><script src="officeimg.js"></script><script src="pdfconv.js"></script>
 </body></html>

@@ -1,14 +1,14 @@
 // PDF extraction + conversion to Word / Excel / PowerPoint
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'libs/pdf.worker.min.js';
-const COL = {word:'#2b579a', excel:'#217346', ppt:'#c43e1c', img:'#0f766e'};
+const COL = {word:'#2b579a', excel:'#217346', ppt:'#c43e1c', img:'#0f766e', tools:'#475569'};
 let mode = 'word', pdfDoc = null, pdfName = 'document', outBlob = null, outName = '', handoff = null;
 const $ = id => document.getElementById(id);
 
 function setMode(m){
   mode = m;
-  $('pdfcard').style.display = m==='img' ? 'none' : ''; $('imgcard').style.display = m==='img' ? '' : 'none';
-  ['word','excel','ppt','img'].forEach(k => { const b = $('t-'+k); b.classList.toggle('on', k===m); b.style.background = k===m ? COL[k] : '#fff'; });
-  $('top').style.background = COL[m]; $('go').style.background = COL[m==='img'?'word':m]; $('dl').style.background = COL[m]; $('openapp').style.background = '#e5e7eb';
+  $('pdfcard').style.display = (m==='img'||m==='tools') ? 'none' : ''; $('imgcard').style.display = m==='img' ? '' : 'none'; $('toolcard').style.display = m==='tools' ? '' : 'none'; if (m==='tools') TOOLS.setTool($('tl-sel').value);
+  ['word','excel','ppt','img','tools'].forEach(k => { const b = $('t-'+k); b.classList.toggle('on', k===m); b.style.background = k===m ? COL[k] : '#fff'; });
+  $('top').style.background = COL[m]; $('go').style.background = COL[(m==='img'||m==='tools')?'word':m]; $('dl').style.background = COL[m]; $('openapp').style.background = '#e5e7eb';
   $('o-excel').classList.toggle('show', m==='excel'); $('o-ppt').classList.toggle('show', m==='ppt');
   $('openapp').textContent = 'Open in ' + ({word:'Word editor',excel:'Excel',ppt:'PowerPoint'}[m]||'');
   $('result').style.display = 'none';
@@ -37,12 +37,23 @@ async function extractPage(pageNo){
   const page = await pdfDoc.getPage(pageNo);
   const vp = page.getViewport({scale:1});
   const tc = await page.getTextContent();
-  const items = tc.items.filter(it => it.str && it.str.trim() !== '' || (it.str === ' ')).map(it => {
+  let items = tc.items.filter(it => it.str && it.str.trim() !== '' || (it.str === ' ')).map(it => {
     const size = Math.abs(it.transform[3]) || it.height || 10;
     const st = tc.styles && tc.styles[it.fontName] || {};
     const fn = (st.fontFamily || '') + ' ' + (it.fontName || '');
     return {s: it.str, x: it.transform[4], y: vp.height - it.transform[5], w: it.width, size, bold: /bold|black|heavy/i.test(fn), italic: /italic|oblique/i.test(fn)};
   }).filter(it => it.s.trim() !== '');
+  const om = $('ocr-mode') ? $('ocr-mode').value : 'auto'; let ocred = false;
+  const chars = items.reduce((a,i)=>a+i.s.trim().length,0);
+  if (om === 'always' || (om === 'auto' && chars < 8)) {
+    const sc = Math.min(3, 2200 / Math.max(vp.width, vp.height));
+    const v2 = page.getViewport({scale: sc}); const cv = document.createElement('canvas'); cv.width = Math.round(v2.width); cv.height = Math.round(v2.height);
+    const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0,0,cv.width,cv.height);
+    await page.render({canvasContext: g, viewport: v2}).promise;
+    progress(0, 1, 'OCR page ' + pageNo + ' (first run loads the OCR engine)...');
+    items = await OCR.pageItems(cv, sc, p => progress(p, 1, 'OCR page ' + pageNo + ': ' + Math.round(p*100) + '%'));
+    cv.width = cv.height = 1; ocred = true;
+  }
   // group into lines by y
   items.sort((a,b) => a.y - b.y || a.x - b.x);
   const lines = [];
@@ -63,7 +74,7 @@ async function extractPage(pageNo){
     L.segs = segs; L.x = segs[0].x; L.end = segs[segs.length-1].end;
     L.text = segs.map(s => s.s).join(' ');
   });
-  return {pageNo, width: vp.width, height: vp.height, lines, page};
+  return {pageNo, width: vp.width, height: vp.height, lines, page, ocred};
 }
 
 // ---- Word ----
@@ -164,8 +175,8 @@ async function convert(){
     const pages = [];
     for (let i = 0; i < nums.length; i++) { progress(i, nums.length, 'Reading page ' + nums[i] + '...'); pages.push(await extractPage(nums[i])); }
     const nText = pages.reduce((a,p)=>a+p.lines.length, 0);
-    if (!nText && !(mode==='ppt' && $('pp-mode').value==='image')) throw new Error('No text found. This looks like a scanned PDF (no OCR available).');
-    let info = nums.length + ' page(s), ' + nText + ' text lines.';
+    if (!nText && !(mode==='ppt' && $('pp-mode').value==='image')) throw new Error('No readable text found, even with OCR. The scan may be too blurry or not English text.');
+    let info = nums.length + ' page(s), ' + nText + ' text lines.' + (pages.some(p=>p.ocred) ? ' Scanned pages were read with OCR - please proof-read numbers.' : '');
     if (mode === 'word') {
       const m = buildWordModel(pages);
       outBlob = await Docx.build({blocks: m.blocks, page: m.page}); outName = pdfName + '.docx';
