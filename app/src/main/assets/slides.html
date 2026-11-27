@@ -1,19 +1,18 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>PowerPoint - Office HUB</title><link rel="stylesheet" href="common.css">
+<title>PowerPoint - Office HUB</title><link rel="stylesheet" href="common.css"><link rel="stylesheet" href="ribbon.css">
 <style>
 html,body{overflow:hidden}body{display:flex;flex-direction:column;height:100%}
-.topbar{background:#c43e1c;position:static}
-.tabsrow{display:flex;background:#a63316;overflow-x:auto;flex:0 0 auto}
-.tabsrow div{padding:8px 14px;color:#f5d3c9;font-size:13px;white-space:nowrap}
-.tabsrow div.on{background:#f3f3f3;color:#c43e1c;font-weight:600}
-.rib{background:#f3f3f3;border-bottom:1px solid #ccc;flex:0 0 auto}
-.rib .tb{position:static;display:none;border:0;background:transparent;padding:4px 6px}
+:root{--app:#c43e1c;--hl:#f7d9cf;--hlt:#c43e1c}
+.topbar{position:static}
+.tabsrow{display:flex;overflow-x:auto;flex:0 0 auto}
+.tabsrow div{white-space:nowrap}
+.rib{flex:0 0 auto}
+.rib .tb{position:static;display:none;border:0}
 .rib .tb.on{display:flex}
-@media (orientation:portrait){.rib .tb[data-t=Home]{flex-wrap:wrap;overflow:visible}}
 #main{flex:1;display:flex;min-height:0;flex-direction:column}
 @media (orientation:landscape){#main{flex-direction:row}#thumbs{flex-direction:column!important;width:130px;height:auto!important;overflow-y:auto!important;overflow-x:hidden!important;order:-1;border-top:0!important;border-right:1px solid #bbb}}
-#stageWrap{flex:1;overflow:auto;background:#8a8f96;display:flex;align-items:flex-start;justify-content:center;padding:8px;min-height:0}
-#stageBox{position:relative;flex:0 0 auto}
+#stageWrap{flex:1;overflow:auto;background:#d0d0d0;display:flex;align-items:flex-start;padding:10px;min-height:0;touch-action:pan-x pan-y}
+#stageBox{position:relative;flex:0 0 auto;margin:0 auto}
 #stage{position:absolute;left:0;top:0;transform-origin:0 0;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.5);overflow:hidden}
 .it{position:absolute;box-sizing:border-box;user-select:none;-webkit-user-select:none;overflow:hidden;line-height:1.2}
 .it.sel{outline:3px solid #c43e1c;overflow:visible}
@@ -26,44 +25,29 @@ html,body{overflow:hidden}body{display:flex;flex-direction:column;height:100%}
 .th.on{border-color:#c43e1c}
 .th .n{position:absolute;left:2px;top:0;font-size:10px;color:#555;z-index:2;background:rgba(255,255,255,.7);padding:0 2px}
 .th .in{transform-origin:0 0;position:absolute;left:0;top:0;pointer-events:none}
-#status{flex:0 0 auto;background:#c43e1c;color:#fff;font-size:12px;padding:3px 8px;display:flex;justify-content:space-between}
+#status{flex:0 0 auto}
 #pres{position:fixed;inset:0;background:#000;z-index:200;display:none;align-items:center;justify-content:center}
 #presS{position:absolute;transform-origin:0 0;background:#fff;overflow:hidden}
-.tb button.act{background:#f5d3c9}
+
 </style></head><body>
-<div class="topbar"><button onclick="RB.home()">&#9664;</button><span class="title" id="ttl">Presentation1 - PowerPoint</span><button onclick="undo()" title="Undo (Ctrl+Z)">&#8630;</button><button onclick="redo()" title="Redo (Ctrl+Y)">&#8631;</button><button onclick="openPptx()">Open</button><button onclick="savePptx()">Save</button><button onclick="present(0)">&#9654;</button></div>
+<div class="topbar"><button onclick="RB.home()" title="Back to Hub">&#9664;</button><span class="qa"><button onclick="savePptx()" title="Save (Ctrl+S)">&#128190;</button><button onclick="undo()" title="Undo (Ctrl+Z)">&#8630;</button><button onclick="redo()" title="Redo (Ctrl+Y)">&#8631;</button></span><span class="title" id="ttl">Presentation1 - PowerPoint</span><button class="txt" onclick="present(0)">&#9654; Show</button></div>
 <div class="tabsrow" id="rtabs"></div>
 <div class="rib" id="rib">
-<div class="tb on" data-t="Home">
- <button onclick="newSlide()">+ Slide</button><button onclick="dupSlide()">Duplicate</button><button onclick="delSlide()">Delete</button><span class="sep"></span>
- <select id="fn" onchange="setP('font',this.value)"><option>Calibri</option><option>Arial</option><option>Times New Roman</option><option>Verdana</option><option>Georgia</option></select>
- <select id="fs" onchange="setP('size',+this.value)"><option>12</option><option>14</option><option>16</option><option>18</option><option selected>20</option><option>24</option><option>28</option><option>32</option><option>40</option><option>48</option><option>60</option><option>72</option></select>
- <button onclick="tgP('bold')"><b>B</b></button><button onclick="tgP('italic')"><i>I</i></button><button onclick="tgP('underline')"><u>U</u></button>
- <input type="color" value="#000000" onchange="setP('color',this.value)" title="Font color"><input type="color" value="#ffff99" onchange="setP('fill',this.value)" title="Fill">
- <button onclick="setP('align','left')">&#8676;</button><button onclick="setP('align','center')">&#8596;</button><button onclick="setP('align','right')">&#8677;</button>
- <button onclick="editText()">Edit text</button><button onclick="front()">Front</button><button onclick="delItem()">Delete item</button>
-</div>
-<div class="tb" data-t="Insert">
- <button onclick="addText()">Text box</button><button onclick="addShape('rect')">Rectangle</button><button onclick="addShape('ellipse')">Oval</button><button onclick="addShape('line')">Line</button><button onclick="addImg()">Picture</button><button onclick="addTitleLayout()">Title layout</button><button onclick="addBulletLayout()">Content layout</button>
-</div>
-<div class="tb" data-t="Design">
- <input type="color" value="#ffffff" onchange="setBg(this.value)" title="Slide background"><button onclick="setBg('#ffffff')">White</button><button onclick="setBg('#1f2937')">Dark</button><button onclick="setBg('#fff4e5')">Warm</button><button onclick="setBg('#e8f1ff')">Blue</button>
- <button onclick="bgAll()">Apply to all</button>
-</div>
-<div class="tb" data-t="Slide Show">
- <button onclick="present(0)">From start</button><button onclick="present(cur)">From current</button>
-</div>
+<div class="tb on" data-t="Home"><div class="grp"><div class="gb"><button class="big" onclick="pasteItem()" ><i>&#128203;</i>Paste</button><div class="col"><div class="r"><button onclick="cutItem()" title="" >&#9986; Cut</button></div><div class="r"><button onclick="copyItem()" title="" >&#10697; Copy</button></div></div></div><div class="gl">Clipboard</div></div><div class="grp"><div class="gb"><button class="big" onclick="newSlide()" ><i>&#10133;</i>New Slide</button><div class="col"><div class="r"><select onchange="newLayout(this.value);this.selectedIndex=0" style="width:96px"><option>Layout ▾</option><option value="title">Title Slide</option><option value="content">Title and Content</option><option value="blank">Blank</option></select></div><div class="r"><button onclick="dupSlide()" title="" >&#10697; Duplicate</button></div><div class="r"><button onclick="delSlide()" title="" >&#128465; Delete</button></div></div></div><div class="gl">Slides</div></div><div class="grp"><div class="gb"><div class="col"><div class="r"><select id="fn" class="sel-w" onchange="setP('font',this.value)"><option>Calibri</option><option>Arial</option><option>Times New Roman</option><option>Verdana</option><option>Georgia</option><option>Tahoma</option><option>Segoe UI</option><option>Cambria</option><option>Impact</option><option>Comic Sans MS</option></select><select id="fs" class="sel-n" onchange="setP('size',+this.value)"><option>10</option><option>12</option><option>14</option><option>16</option><option>18</option><option selected>20</option><option>24</option><option>28</option><option>32</option><option>36</option><option>40</option><option>48</option><option>60</option><option>72</option><option>96</option></select><button onclick="sizeStep(2)" title="Increase font size" >A&#9650;</button><button onclick="sizeStep(-2)" title="Decrease font size" >A&#9660;</button></div><div class="r"><button onclick="tgP('bold')" title="Bold (Ctrl+B)" ><b>B</b></button><button onclick="tgP('italic')" title="Italic (Ctrl+I)" ><i>I</i></button><button onclick="tgP('underline')" title="Underline (Ctrl+U)" ><u>U</u></button><label class="cb" title="Font color"><b style="border-bottom-color:#000000">A</b><input type="color" value="#000000" oninput="setP('color',this.value);this.previousElementSibling.style.borderBottomColor=this.value"></label></div></div></div><div class="gl">Font</div></div><div class="grp"><div class="gb"><div class="col"><div class="r"><button onclick="setP('align','left')" title="Align left (Ctrl+L)" >&#8676;</button><button onclick="setP('align','center')" title="Center (Ctrl+E)" >&#8596;</button><button onclick="setP('align','right')" title="Align right (Ctrl+R)" >&#8677;</button><button onclick="bulletTog()" title="Bullets" >&bull;&#8801;</button></div><div class="r"><button onclick="editText()" title="" >&#9998; Edit text</button></div></div></div><div class="gl">Paragraph</div></div><div class="grp"><div class="gb"><button class="big" onclick="addShape('rect')" ><i>&#9645;</i>Rectangle</button><button class="big" onclick="addShape('ellipse')" ><i>&#9711;</i>Oval</button><div class="col"><div class="r"><label class="cb" title="Shape fill"><b style="border-bottom-color:#c43e1c">&#9701;</b><input type="color" value="#c43e1c" oninput="setP('fill',this.value);this.previousElementSibling.style.borderBottomColor=this.value"></label></div><div class="r"><button onclick="" title="" style="display:none">Outline</button></div><div class="r"><label class="cb" title="Shape outline"><b style="border-bottom-color:#333333">&#9634;</b><input type="color" value="#333333" oninput="setP('stroke',this.value);this.previousElementSibling.style.borderBottomColor=this.value"></label></div></div></div><div class="gl">Drawing</div></div><div class="grp"><div class="gb"><div class="col"><div class="r"><button onclick="front()" title="" >Bring to Front</button></div><div class="r"><button onclick="toBack()" title="" >Send to Back</button></div><div class="r"><button onclick="delItem()" title="" >&#128465; Delete item</button></div></div></div><div class="gl">Arrange</div></div></div><div class="tb" data-t="Insert"><div class="grp"><div class="gb"><button class="big" onclick="newSlide()" ><i>&#10133;</i>New Slide</button></div><div class="gl">Slides</div></div><div class="grp"><div class="gb"><button class="big" onclick="addImg()" ><i>&#128444;</i>Pictures</button></div><div class="gl">Images</div></div><div class="grp"><div class="gb"><button class="big" onclick="addShape('rect')" ><i>&#9645;</i>Rectangle</button><button class="big" onclick="addShape('ellipse')" ><i>&#9711;</i>Oval</button><button class="big" onclick="addShape('line')" ><i>&#9472;</i>Line</button></div><div class="gl">Illustrations</div></div><div class="grp"><div class="gb"><button class="big" onclick="addText()" ><i>&#65;</i>Text Box</button><div class="col"><div class="r"><button onclick="addTitleLayout()" title="" >Title layout</button></div><div class="r"><button onclick="addBulletLayout()" title="" >Bullet layout</button></div></div></div><div class="gl">Text</div></div></div><div class="tb" data-t="Design"><div class="grp"><div class="gb"><label class="cb" title="Background color"><b style="border-bottom-color:#ffffff">&#9640;</b><input type="color" value="#ffffff" oninput="setBg(this.value)"></label><div class="col"><div class="r"><button onclick="setBg('#ffffff')" title="" >White</button></div><div class="r"><button onclick="setBg('#1f2937')" title="" >Dark</button></div></div><div class="col"><div class="r"><button onclick="setBg('#fff4e5')" title="" >Warm</button></div><div class="r"><button onclick="setBg('#dbeafe')" title="" >Blue</button></div></div></div><div class="gl">Background</div></div><div class="grp"><div class="gb"><button class="big" onclick="bgAll()" ><i>&#10003;</i>Apply to All</button></div><div class="gl">Customize</div></div></div><div class="tb" data-t="Slide Show"><div class="grp"><div class="gb"><button class="big" onclick="present(0)" ><i>&#9654;</i>From Beginning</button><button class="big" onclick="present(cur)" ><i>&#9654;</i>From Current Slide</button></div><div class="gl">Start Slide Show</div></div></div><div class="tb" data-t="View"><div class="grp"><div class="gb"><button class="big" onclick="zoomBy(0.1)" ><i>&#128269;</i>Zoom +</button><button class="big" onclick="zoomBy(-0.1)" ><i>&#128269;</i>Zoom &minus;</button><button class="big" onclick="setZoom(1)" ><i>&#8596;</i>Fit</button></div><div class="gl">Zoom</div></div></div>
 </div>
 <div id="main"><div id="stageWrap"><div id="stageBox"><div id="stage"></div></div></div><div id="thumbs"></div></div>
-<div id="status"><span id="stL">Slide 1</span><span id="stR">Tap to select. Drag to move. Round handle resizes.</span></div>
+<div id="status"><span id="stL">Slide 1</span><span id="stR"></span><span class="sp"></span><span class="zm"><button onclick="zoomBy(-0.1)">&minus;</button><input type="range" id="zs" min="40" max="300" value="100" oninput="setZoom(this.value/100)"><button onclick="zoomBy(0.1)">+</button><span id="zp" onclick="setZoom(1)">100%</span></span></div>
 <div id="pres"><div id="presS"></div></div>
 <script src="libs/jszip.min.js"></script><script src="libs/pptxgen.bundle.js"></script><script src="common.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 let deck={w:960,h:540,slides:[]},cur=0,selId=null,name='Presentation1',scale=1,uid=1;
-const TABS=['Home','Insert','Design','Slide Show'];
-$('rtabs').innerHTML=TABS.map((t,i)=>`<div class="${i?'':'on'}" onclick="tab('${t}',this)">${t}</div>`).join('');
-function tab(t,el){document.querySelectorAll('#rtabs div').forEach(d=>d.classList.remove('on'));el.classList.add('on');document.querySelectorAll('.rib .tb').forEach(b=>b.classList.toggle('on',b.dataset.t===t));}
+const TABS=['File','Home','Insert','Design','Slide Show','View'];let curTab='Home';
+function renderTabs(){$('rtabs').innerHTML=TABS.map(t=>`<div class="${t===curTab?'on':''}${t==='File'?' file':''}" onclick="tab('${t}')">${t}</div>`).join('');document.querySelectorAll('.rib .tb').forEach(b=>b.classList.toggle('on',b.dataset.t===curTab));}
+function tab(t){if(t==='File'){fileMenu();return;}curTab=t;renderTabs();}
+function fileMenu(){const it=(ic,t,f)=>`<div style="padding:12px 6px;border-bottom:1px solid #eee;font-size:15px" onclick="closeFM();${f}">${ic} &nbsp;${t}</div>`;const d=document.createElement('div');d.id='fm';d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:150;display:flex;align-items:center;justify-content:center';d.innerHTML='<div style="background:#fff;border-radius:10px;padding:14px;width:90%;max-width:420px"><h3 style="margin:0 0 6px">File</h3>'+it('&#128196;','New presentation','newDeck()')+it('&#128194;','Open&hellip;','openPptx()')+it('&#128190;','Save as PowerPoint (.pptx)','savePptx()')+it('&#9654;','Start slide show','present(0)')+'<div style="text-align:right;margin-top:10px"><button onclick="closeFM()" style="padding:8px 14px;border:0;border-radius:6px;background:#ddd">Close</button></div></div>';document.body.appendChild(d);d.addEventListener('click',e=>{if(e.target===d)closeFM();});}
+function closeFM(){const d=$('fm');if(d)d.remove();}
+function newDeck(){if(!confirm('Start a new presentation? Unsaved changes are lost.'))return;deck={w:960,h:540,slides:[mkSlide()]};S().items.push({type:'text',x:80,y:150,w:800,h:110,text:'Click to add title',size:48,bold:true,align:'center',color:'#000000'},{type:'text',x:160,y:290,w:640,h:60,text:'Click to add subtitle',size:24,align:'center',color:'#555555'});cur=0;selId=null;name='Presentation1';$('ttl').textContent=name+' - PowerPoint';ensure();save();render();}
 const S=()=>deck.slides[cur];
 const nid=()=>'i'+(uid++)+Math.floor(Math.random()*1e4);
 function mkSlide(){return{bg:'#ffffff',items:[]}}
@@ -80,7 +64,8 @@ function bind(d,it){let pd=null,moved=false,t0=0;
   d.addEventListener('pointerup',e=>{if(!pd)return;const was=pd.was;pd=null;if(moved){save();renderThumbs();}else if(was&&it.type==='text')editText();});}
 $('stageWrap').addEventListener('pointerdown',e=>{if(e.target.id==='stageWrap'||e.target.id==='stage'||e.target.id==='stageBox'){endEdit();selId=null;document.querySelectorAll('.it.sel').forEach(x=>x.classList.remove('sel'));}});
 function render(){const st=$('stage');st.style.width=deck.w+'px';st.style.height=deck.h+'px';st.style.background=S().bg;st.innerHTML='';S().items.forEach(it=>st.appendChild(itemEl(it,true)));fitStage();renderThumbs();$('stL').textContent=`Slide ${cur+1} of ${deck.slides.length}`;syncRibbon();}
-function fitStage(){const w=$('stageWrap');const aw=w.clientWidth-16,ah=w.clientHeight-16;scale=Math.min(aw/deck.w,ah/deck.h);$('stage').style.transform=`scale(${scale})`;const b=$('stageBox');b.style.width=deck.w*scale+'px';b.style.height=deck.h*scale+'px';}
+let uz=1;function setZoom(z){uz=Math.max(.4,Math.min(3,Math.round(z*100)/100));$('zs').value=uz*100;$('zp').textContent=Math.round(uz*100)+'%';fitStage();}function zoomBy(d){setZoom(uz+d)}
+function fitStage(){const w=$('stageWrap');const aw=w.clientWidth-16,ah=w.clientHeight-16;scale=Math.min(aw/deck.w,ah/deck.h)*uz;$('stage').style.transform=`scale(${scale})`;const b=$('stageBox');b.style.width=deck.w*scale+'px';b.style.height=deck.h*scale+'px';}
 window.addEventListener('resize',()=>{fitStage();renderThumbs();});
 function renderThumbs(){const T=$('thumbs');T.innerHTML='';const land=matchMedia('(orientation:landscape)').matches;const tw=land?112:Math.round(72*deck.w/deck.h);const k=tw/deck.w;deck.slides.forEach((s,i)=>{const d=document.createElement('div');d.className='th'+(i===cur?' on':'');d.style.width=tw+'px';d.style.height=Math.round(deck.h*k)+'px';d.innerHTML=`<span class="n">${i+1}</span>`;const in_=document.createElement('div');in_.className='in';in_.style.cssText=`width:${deck.w}px;height:${deck.h}px;transform:scale(${k});background:${s.bg}`;s.items.forEach(it=>in_.appendChild(itemEl(it,false)));d.appendChild(in_);d.onclick=()=>{endEdit();cur=i;selId=null;render();};T.appendChild(d);});}
 /* ---------- editing ---------- */
@@ -134,7 +119,7 @@ function init(){let imp=null;try{imp=localStorage.getItem('hub_import_slides');}
   if(imp){try{localStorage.removeItem('hub_import_slides');deck=JSON.parse(imp);name='Converted';}catch(e){}}
   else{try{const o=JSON.parse(localStorage.getItem('hub_slides_deck')||'null');if(o){deck=o.deck;name=o.name||name;}}catch(e){}}
   if(!deck.slides.length){deck.slides.push(mkSlide());S().items.push({type:'text',x:80,y:150,w:800,h:110,text:'Click to add title',size:48,bold:true,align:'center',color:'#000000'},{type:'text',x:160,y:290,w:640,h:60,text:'Click to add subtitle',size:24,align:'center',color:'#555555'});}
-  ensure();$('ttl').textContent=name+' - PowerPoint';render();}
+  ensure();$('ttl').textContent=name+' - PowerPoint';renderTabs();render();}
 
 /* ---------- undo/redo + desktop shortcuts ---------- */
 const HS={a:[],i:-1,busy:false};let SCLIP=null;
@@ -179,6 +164,16 @@ document.addEventListener('keydown',e=>{
   if(k==='Home'){P();goSlide(0);return;}if(k==='End'){P();goSlide(deck.slides.length-1);return;}
   if(kl==='f2'){P();editText();}
 },true);
+function sizeStep(d){const it=sel();if(!it||it.type!=='text'){alert('Tap a text item first.');return}it.size=Math.max(6,Math.min(200,(it.size||20)+d));save();render();}
+function toBack(){const it=sel();if(!it)return;const a=S().items;a.splice(a.indexOf(it),1);a.unshift(it);save();render();}
+function bulletTog(){const it=sel();if(!it||it.type!=='text'){alert('Tap a text item first.');return}const L=String(it.text||'').split('\n');const all=L.every(l=>/^\u2022 /.test(l));it.text=L.map(l=>all?l.replace(/^\u2022 /,''):(/^\u2022 /.test(l)?l:'\u2022 '+l)).join('\n');save();render();}
+function newLayout(v){if(!v)return;newSlide();if(v==='title')addTitleLayout();else if(v==='content')addBulletLayout();}
+function copyItem(){if(sel())SCLIP=JSON.stringify(sel());}function cutItem(){if(sel()){SCLIP=JSON.stringify(sel());delItem();}}
+function pasteItem(){if(SCLIP){const c=JSON.parse(SCLIP);c.id=nid();c.x+=20;c.y+=20;endEdit();S().items.push(c);selId=c.id;save();render();}}
+(function(){const W=$('stageWrap');let pz=null;const dist=e=>Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+W.addEventListener('touchstart',e=>{if(e.touches.length===2)pz={d:dist(e),z:uz};},{passive:true});
+W.addEventListener('touchmove',e=>{if(pz&&e.touches.length===2){e.preventDefault();setZoom(pz.z*dist(e)/pz.d);}},{passive:false});
+W.addEventListener('touchend',e=>{if(e.touches.length<2)pz=null;});})();
 window.__back=()=>{if($('pres').style.display==='flex'){endP();return}RB.home()};
 init();pushH();
 </script></body></html>

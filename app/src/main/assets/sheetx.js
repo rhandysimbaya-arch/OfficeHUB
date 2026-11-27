@@ -256,6 +256,13 @@ function tsvOfSel() { const rows = []; for (let r = sel.r1; r <= Math.min(sel.r2
 function sysCopy(t) { try { const ta = document.createElement('textarea'); ta.value = t; ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); } catch (e) { } try { navigator.clipboard && navigator.clipboard.writeText(t); } catch (e) { } }
 const _copy0 = copy;
 copy = function (cut) { _copy0(cut); if (clip) { clip.tsv = tsvOfSel(); sysCopy(clip.tsv); } };
+let PSD = false;
+function pasteSpecialDlg() {
+  if (!clip) { $('stL').textContent = 'Copy something first (Ctrl+C), then Paste Special'; return; }
+  const it = (k, t, f) => `<div style="padding:11px 6px;border-bottom:1px solid #eee;font-size:15px" onclick="PSD=false;closeGen();pasteSpecial('${f}')"><u><b>${k}</b></u> &nbsp;${t}</div>`;
+  gen('Paste Special', it('A', 'All', 'all') + it('F', 'Formulas', 'formulas') + it('V', 'Values', 'values') + it('T', 'Formats', 'formats') + it('E', 'Transpose', 'transpose') + '<p style="font-size:12px;color:#666">Press the underlined letter, or tap an option. Esc to cancel.</p>', []); PSD = true;
+}
+function pasteValuesNow() { if (clip) { pasteSpecial('values'); return; } try { navigator.clipboard.readText().then(t => { if (t) pasteText(t); }); } catch (e) { } }
 function pasteText(t) {
   const rows = t.replace(/\r/g, '').replace(/\n$/, '').split('\n').map(l => l.split('\t')); if (!rows.length) return;
   rows.forEach((row, i) => row.forEach((x, j) => { const r = anchor.r + i, c = anchor.c + j; if (r <= ROWS && c <= COLS) wb.setRaw(cur, r, c, x); }));
@@ -271,15 +278,19 @@ function modalOpen() { for (const id of ['mGen', 'mUF', 'mVba', 'mRun']) { const
 function insertNow(kind) { const d = new Date(); const ser = Math.floor(E.dateToSerial(d)); if (kind === 'time') { const fr = (d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds()) / 86400; wb.setRaw(cur, anchor.r, anchor.c, ser + fr); sh().fmt[key(anchor.r, anchor.c)] = 'h:mm AM/PM'; } else { wb.setRaw(cur, anchor.r, anchor.c, ser); sh().fmt[key(anchor.r, anchor.c)] = 'm/d/yyyy'; } save(); refresh(); }
 function selectRowCol(mode) { if (mode === 'row') setSel(anchor.r, 1, anchor.r, COLS, anchor.r, anchor.c); else setSel(1, anchor.c, ROWS, anchor.c, anchor.r, anchor.c); }
 function shortcutsHelp() {
-  const L = [['Ctrl+C / X / V', 'Copy / Cut / Paste'], ['Ctrl+Z / Y', 'Undo / Redo'], ['Ctrl+B / I / U', 'Bold / Italic / Underline'], ['Ctrl+5', 'Strikethrough'], ['Ctrl+A', 'Select all'], ['Ctrl+D / R', 'Fill down / right'], ['Ctrl+F / H', 'Find & Replace'], ['Ctrl+S', 'Save'], ['Ctrl+O', 'Open'], ['Ctrl+1', 'Format Cells'], ['Ctrl+Shift+1 / 2 / 3', 'Number / Time / Date format'], ['Ctrl+Shift+4 / 5', 'Currency / Percent'], ['Ctrl+; / Ctrl+Shift+;', 'Insert date / time'], ['Ctrl++ / Ctrl+-', 'Insert / delete row'], ['Ctrl+9 / Ctrl+0', 'Hide row / column'], ['Ctrl+Arrow', 'Jump to edge of data'], ['Ctrl+Home / End', 'First cell / last used cell'], ['Shift+Arrow', 'Extend selection'], ['Ctrl+Shift+Arrow', 'Extend to edge of data'], ['Ctrl+Space / Shift+Space', 'Select column / row'], ['Tab / Shift+Tab', 'Move right / left'], ['Enter / Shift+Enter', 'Move down / up'], ['Page Up / Down', 'Scroll one screen'], ['F2', 'Edit cell'], ['F4', 'Cycle $ in reference (editing)'], ['F5 / Ctrl+G', 'Go to'], ['Alt+=', 'AutoSum'], ['Ctrl+Enter', 'Fill selection with entry'], ['Delete', 'Clear contents'], ['Esc', 'Cancel']];
+  const L = [['Ctrl+C / X / V', 'Copy / Cut / Paste'], ['Ctrl+Alt+V', 'Paste Special (then V=Values, F=Formulas, T=Formats, E=Transpose)'], ['Ctrl+Shift+V', 'Paste values only'], ['Ctrl+Z / Y', 'Undo / Redo'], ['Ctrl+B / I / U', 'Bold / Italic / Underline'], ['Ctrl+5', 'Strikethrough'], ['Ctrl+A', 'Select all'], ['Ctrl+D / R', 'Fill down / right'], ['Ctrl+F / H', 'Find & Replace'], ['Ctrl+S', 'Save'], ['Ctrl+O', 'Open'], ['Ctrl+1', 'Format Cells'], ['Ctrl+Shift+1 / 2 / 3', 'Number / Time / Date format'], ['Ctrl+Shift+4 / 5', 'Currency / Percent'], ['Ctrl+; / Ctrl+Shift+;', 'Insert date / time'], ['Ctrl++ / Ctrl+-', 'Insert / delete row'], ['Ctrl+9 / Ctrl+0', 'Hide row / column'], ['Ctrl+Arrow', 'Jump to edge of data'], ['Ctrl+Home / End', 'First cell / last used cell'], ['Shift+Arrow', 'Extend selection'], ['Ctrl+Shift+Arrow', 'Extend to edge of data'], ['Ctrl+Space / Shift+Space', 'Select column / row'], ['Tab / Shift+Tab', 'Move right / left'], ['Enter / Shift+Enter', 'Move down / up'], ['Page Up / Down', 'Scroll one screen'], ['F2', 'Edit cell'], ['F4', 'Cycle $ in reference (editing)'], ['F5 / Ctrl+G', 'Go to'], ['Alt+=', 'AutoSum'], ['Ctrl+Enter', 'Fill selection with entry'], ['Delete', 'Clear contents'], ['Esc', 'Cancel']];
   gen('Keyboard shortcuts', '<table style="width:100%;font-size:13px;border-collapse:collapse">' + L.map(x => `<tr><td style="padding:3px 6px;border-bottom:1px solid #eee;white-space:nowrap"><b>${x[0]}</b></td><td style="padding:3px 6px;border-bottom:1px solid #eee">${x[1]}</td></tr>`).join('') + '</table>', []);
 }
 document.addEventListener('keydown', e => {
+  if (PSD) { const k0 = e.key.toLowerCase(); const m = { a: 'all', f: 'formulas', v: 'values', t: 'formats', e: 'transpose', enter: 'all' }[k0]; if (e.key === 'Escape') { PSD = false; closeGen(); e.preventDefault(); return; } if (m) { e.preventDefault(); e.stopPropagation(); PSD = false; closeGen(); pasteSpecial(m); return; } }
+  if (!modalOpen()) PSD = false;
   if (modalOpen()) return;
   const ae = document.activeElement, inFx = ae === $('fx'), inField = /INPUT|TEXTAREA|SELECT/.test(ae.tagName), k = e.key, ctrl = e.ctrlKey || e.metaKey, kl = k.length === 1 ? k.toLowerCase() : k;
   if (inFx) { if (ctrl && k === 'Enter') { e.preventDefault(); const v = $('fx').value, s0 = Object.assign({}, sel); commitFx(0); for (let r = s0.r1; r <= s0.r2; r++) for (let c = s0.c1; c <= s0.c2; c++) wb.setRaw(cur, r, c, v); sel = s0; save(); refresh(); } return; }
   if (inField) return;
   const prevent = () => { e.preventDefault(); e.stopPropagation(); };
+  if (ctrl && e.altKey && kl === 'v') { prevent(); pasteSpecialDlg(); return; }
+  if (ctrl && e.shiftKey && kl === 'v') { prevent(); pasteValuesNow(); return; }
   if (ctrl && !e.altKey) {
     switch (kl) {
       case 'c': prevent(); copy(false); return; case 'x': prevent(); copy(true); return;
