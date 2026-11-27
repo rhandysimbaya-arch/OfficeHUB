@@ -1,0 +1,72 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>PDF Reader - Office HUB</title><link rel="stylesheet" href="common.css">
+<style>
+html,body{overflow:hidden}body{display:flex;flex-direction:column;height:100%;background:#3b3f45}
+.topbar{background:#b91c1c;position:static}
+.bar{display:flex;gap:4px;align-items:center;padding:4px 6px;background:#f3f3f3;border-bottom:1px solid #ccc;flex:0 0 auto;overflow-x:auto}
+.bar button{padding:6px 10px;border:1px solid #bbb;background:#fff;border-radius:6px;font-size:14px;white-space:nowrap}
+.bar input[type=number]{width:54px;padding:5px;font-size:14px}
+.bar.s{display:none;background:#fff8dc}
+#view{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:8px 0;text-align:center}
+.pg{position:relative;margin:0 auto 10px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.5);overflow:hidden}
+.pg canvas{display:block;width:100%;height:100%}
+.pg .hl{position:absolute;background:rgba(255,200,0,.45);pointer-events:none}
+.pg .hl.cur{background:rgba(255,120,0,.6)}
+body.dark .pg canvas{filter:invert(1) hue-rotate(180deg)}
+#empty{color:#cbd5e1;margin-top:30vh;font-size:15px}
+#status{flex:0 0 auto;background:#b91c1c;color:#fff;font-size:12px;padding:3px 8px;display:flex;justify-content:space-between}
+</style></head><body>
+<div class="topbar"><button onclick="RB.home()">&#9664;</button><span class="title" id="ttl">PDF Reader</span><button onclick="openPdf()">Open</button><button onclick="toggleSearch()">&#128269;</button></div>
+<div class="bar">
+ <button onclick="zoom(-1)">&minus;</button><button onclick="zoom(1)">+</button><button onclick="fitW()">Fit width</button><button onclick="fitP()">Fit page</button><span style="color:#666">|</span>
+ <button onclick="goPrev()">&#9650;</button><input type="number" id="pn" min="1" value="1" onchange="goTo(+this.value)"><span id="pt" style="white-space:nowrap">/ 0</span><button onclick="goNext()">&#9660;</button><span style="color:#666">|</span>
+ <button onclick="toggleDark()" id="dk">Night</button><button onclick="toConv()">Convert...</button>
+</div>
+<div class="bar s" id="sbar"><input type="text" id="q" placeholder="Search in document" style="flex:1;min-width:120px;padding:6px;font-size:14px" onkeydown="if(event.key==='Enter')doSearch()"><button onclick="doSearch()">Find</button><button onclick="step(-1)">&#9664;</button><button onclick="step(1)">&#9654;</button><span id="sc" style="font-size:12px"></span></div>
+<div id="view"><div id="empty">Tap <b>Open</b> to choose a PDF file</div><div id="pages"></div></div>
+<div id="status"><span id="stL"></span><span id="stR"></span></div>
+<script src="libs/pdf.worker.min.js"></script><script src="libs/pdf.min.js"></script><script src="common.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='libs/pdf.worker.min.js';
+const $=id=>document.getElementById(id);
+let doc=null,name='',zoomW=0,fitWidth=true,pages=[],obs=null,cache={},hits=[],hi=-1,baseRatio=1.414,rawBuf=null;
+function openPdf(){RB.pickFile('.pdf,application/pdf',async(n,buf)=>{try{await load(n,buf);}catch(e){alert('Could not open PDF: '+e.message);}});}
+async function load(n,buf){rawBuf=buf.slice?buf.slice(0):buf;doc=await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;name=n;cache={};hits=[];hi=-1;$('ttl').textContent=n.replace(/\.pdf$/i,'');$('pt').textContent='/ '+doc.numPages;$('pn').max=doc.numPages;$('empty').style.display='none';
+  const p1=await doc.getPage(1);const v=p1.getViewport({scale:1});baseRatio=v.height/v.width;fitWidth=true;buildPages();let last=1;try{last=+localStorage.getItem('rd_'+n+doc.numPages)||1;}catch(e){}if(last>1)setTimeout(()=>goTo(last),300);}
+function pageW(){const vw=$('view').clientWidth-16;return fitWidth||!zoomW?vw:zoomW;}
+function buildPages(){const box=$('pages');box.innerHTML='';pages=[];if(obs)obs.disconnect();obs=new IntersectionObserver(es=>es.forEach(e=>{const i=+e.target.dataset.i;if(e.isIntersecting)render(i);else release(i);}),{root:$('view'),rootMargin:'600px 0px'});
+  const w=pageW();for(let i=1;i<=doc.numPages;i++){const d=document.createElement('div');d.className='pg';d.dataset.i=i;d.style.width=w+'px';d.style.height=Math.round(w*baseRatio)+'px';box.appendChild(d);pages[i]=d;obs.observe(d);}updInd();}
+async function render(i){const d=pages[i];if(!d||d.dataset.r===String(pageW()))return;d.dataset.r=pageW();const p=await doc.getPage(i);const w=pageW();const v0=p.getViewport({scale:1});const sc=w/v0.width;const dpr=Math.min(2,window.devicePixelRatio||1);const vp=p.getViewport({scale:sc*dpr});
+  d.style.height=Math.round(v0.height*sc)+'px';let cv=d.querySelector('canvas');if(!cv){cv=document.createElement('canvas');d.insertBefore(cv,d.firstChild);}cv.width=vp.width;cv.height=vp.height;
+  await p.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;d._sc=sc;paintHits(i);}
+function release(i){const d=pages[i];if(!d)return;const cv=d.querySelector('canvas');if(cv){cv.width=1;cv.height=1;cv.remove();}d.dataset.r='';}
+function relayout(){if(!doc)return;const top=curPage();buildPages();goTo(top);}
+function zoom(dir){fitWidth=false;zoomW=Math.max(120,Math.min(2400,pageW()*(dir>0?1.25:0.8)));relayout();}
+function fitW(){fitWidth=true;relayout();}
+function fitP(){if(!doc)return;fitWidth=false;const vh=$('view').clientHeight-20;zoomW=Math.min($('view').clientWidth-16,vh/baseRatio);relayout();}
+window.addEventListener('resize',()=>{if(fitWidth)relayout();});
+function curPage(){if(!doc)return 1;const v=$('view'),mid=v.scrollTop+v.clientHeight*0.3;let best=1;for(let i=1;i<=doc.numPages;i++){if(pages[i].offsetTop-pages[1].offsetTop<=mid)best=i;else break;}return best;}
+function goTo(n){if(!doc)return;n=Math.max(1,Math.min(doc.numPages,Math.round(n)||1));$('view').scrollTop=pages[n].offsetTop-pages[1].offsetTop+8;updInd();}
+function goPrev(){goTo(curPage()-1)}function goNext(){goTo(curPage()+1)}
+function updInd(){if(!doc)return;const c=curPage();$('pn').value=c;$('stL').textContent='Page '+c+' of '+doc.numPages;try{localStorage.setItem('rd_'+name+doc.numPages,c);}catch(e){}}
+$('view').addEventListener('scroll',()=>{clearTimeout(window._st);window._st=setTimeout(updInd,120);});
+function toggleDark(){document.body.classList.toggle('dark');$('dk').textContent=document.body.classList.contains('dark')?'Day':'Night';}
+/* pinch zoom */
+let pz=null;$('view').addEventListener('touchstart',e=>{if(e.touches.length===2){pz={d:dist(e),w:pageW()};}},{passive:true});
+$('view').addEventListener('touchmove',e=>{if(pz&&e.touches.length===2){const k=dist(e)/pz.d;$('pages').style.transformOrigin='50% 0';$('pages').style.transform='scale('+Math.max(.4,Math.min(4,k))+')';pz.k=k;}},{passive:true});
+$('view').addEventListener('touchend',e=>{if(pz&&e.touches.length<2){const k=pz.k;$('pages').style.transform='';if(k&&Math.abs(k-1)>0.05){fitWidth=false;zoomW=Math.max(120,Math.min(2400,pz.w*k));relayout();}pz=null;}});
+function dist(e){return Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}
+/* search */
+function toggleSearch(){const s=$('sbar');s.style.display=s.style.display==='flex'?'none':'flex';if(s.style.display==='flex')$('q').focus();else clearHits();}
+async function textOf(i){if(cache[i])return cache[i];const p=await doc.getPage(i);const tc=await p.getTextContent();const v=p.getViewport({scale:1});cache[i]={items:tc.items,vh:v.height,vw:v.width};return cache[i];}
+async function doSearch(){if(!doc)return;const q=$('q').value.trim().toLowerCase();clearHits();if(!q)return;$('sc').textContent='Searching...';
+  for(let i=1;i<=doc.numPages;i++){const t=await textOf(i);t.items.forEach(it=>{const s=it.str.toLowerCase();let k=s.indexOf(q);while(k>=0){const w=it.width*(q.length/Math.max(1,s.length)),x=it.transform[4]+it.width*(k/Math.max(1,s.length)),y=it.transform[5],h=Math.abs(it.transform[3])||it.height||10;hits.push({p:i,x,y,w,h,vw:t.vw,vh:t.vh});k=s.indexOf(q,k+q.length);}});if(i%10===0)$('sc').textContent='Searching '+i+'/'+doc.numPages;}
+  $('sc').textContent=hits.length?hits.length+' found':'No match';if(hits.length){hi=-1;step(1);}}
+function clearHits(){hits=[];hi=-1;document.querySelectorAll('.hl').forEach(e=>e.remove());$('sc').textContent='';}
+function paintHits(i){const d=pages[i];if(!d)return;d.querySelectorAll('.hl').forEach(e=>e.remove());hits.forEach((h,k)=>{if(h.p!==i)return;const sc=d._sc||(d.clientWidth/h.vw);const e=document.createElement('div');e.className='hl'+(k===hi?' cur':'');e.style.cssText=`left:${h.x*sc}px;top:${(h.vh-h.y-h.h*0.85)*sc}px;width:${Math.max(4,h.w*sc*1.12)}px;height:${h.h*sc*1.1}px`;d.appendChild(e);});}
+function step(dir){if(!hits.length)return;hi=(hi+dir+hits.length)%hits.length;const h=hits[hi];goTo(h.p);const d=pages[h.p];$('sc').textContent=(hi+1)+' / '+hits.length;
+  setTimeout(()=>{const sc=d._sc||(d.clientWidth/h.vw);$('view').scrollTop=d.offsetTop-pages[1].offsetTop+(h.vh-h.y)*sc-$('view').clientHeight/3;paintAll();},120);}
+function paintAll(){for(let i=1;i<=doc.numPages;i++)if(pages[i]&&pages[i].querySelector('canvas'))paintHits(i);}
+function toConv(){alert('To convert this PDF, open the PDF Converter from the home screen and choose the same file.');}
+window.__back=()=>{if($('sbar').style.display==='flex'){toggleSearch();return}RB.home()};
+</script></body></html>

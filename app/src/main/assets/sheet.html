@@ -15,6 +15,7 @@ body{display:flex;flex-direction:column;height:100%}
 .fbar input{height:30px;border:1px solid #ccc;border-radius:4px;padding:0 6px;font-size:14px}
 #nm{width:64px;text-align:center}#fx{flex:1;min-width:0}
 .fbar b{color:#217346;font-style:italic}
+#fguide{display:none;background:#fffbe6;border-bottom:1px solid #e0d68a;padding:4px 8px;font-size:13px;flex:0 0 auto;max-height:84px;overflow:auto}#fguide .sig{font-family:Consolas,monospace;word-break:break-word}#fguide .sig b{color:#000;background:#ffe58f;padding:0 2px;border-radius:2px}#fguide .sig u{text-decoration:none;color:#555}#fguide .ch{display:inline-block;margin:3px 4px 0 0;padding:3px 8px;background:#fff;border:1px solid #cbb;border-radius:12px;font-size:12px}#rngBtn.on{background:#cfe8d9!important}
 #wrap{flex:1;overflow:auto;position:relative;background:#fff;-webkit-overflow-scrolling:touch}
 table.g{border-collapse:collapse;table-layout:fixed;font-size:13px}
 .g td,.g th{border:1px solid #d4d4d4;height:28px;padding:0 4px;overflow:hidden;white-space:nowrap;text-overflow:clip;max-width:0}
@@ -80,7 +81,8 @@ table.g{border-collapse:collapse;table-layout:fixed;font-size:13px}
  <button onclick="ufList()">UserForms</button>
 </div>
 </div>
-<div class="fbar"><input id="nm" value="A1" onkeydown="if(event.key==='Enter')gotoName(this.value)"><b>fx</b><input id="fx" autocomplete="off" onkeydown="fxKey(event)" onfocus="editing=true"><button onclick="commitFx()" style="height:30px;border:1px solid #ccc;background:#fff;border-radius:4px">&#10003;</button></div>
+<div class="fbar"><input id="nm" value="A1" onkeydown="if(event.key==='Enter')gotoName(this.value)"><b>fx</b><input id="fx" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" onkeydown="fxKey(event)" onfocus="fxFocus()" oninput="fxInput()" onkeyup="guide()" onclick="guide()"><button id="rngBtn" onclick="toggleRange()" title="Select a range" style="height:30px;border:1px solid #ccc;background:#fff;border-radius:4px;font-size:12px">A:B</button><button onclick="cancelEdit()" style="height:30px;border:1px solid #ccc;background:#fff;border-radius:4px;color:#b00">&#10005;</button><button onclick="commitFx()" style="height:30px;border:1px solid #ccc;background:#fff;border-radius:4px;color:#217346">&#10003;</button></div>
+<div id="fguide"></div>
 <div id="wrap"><table class="g" id="grid"></table><div id="shapes"></div></div>
 <div id="status"><span id="stL">Ready</span><span id="stR"></span></div>
 <div class="tabsrow" id="stabs" style="background:#e6e6e6"></div>
@@ -135,25 +137,68 @@ function paintSel(prev){ // cheap: repaint old+new selection
 function paintHeaders(){document.querySelectorAll('.g th.hs').forEach(e=>e.classList.remove('hs'));for(let c=sel.c1;c<=Math.min(sel.c2,COLS);c++){const e=$('ch'+c);if(e)e.classList.add('hs');}for(let r=sel.r1;r<=Math.min(sel.r2,ROWS);r++){const e=$('rh'+r);if(e)e.classList.add('hs');}}
 function addrOf(s){return s.r1===s.r2&&s.c1===s.c2?E.addr(s.r1,s.c1):E.addr(s.r1,s.c1)+':'+E.addr(s.r2,s.c2)}
 function updateFx(){
-  $('nm').value=addrOf(sel);if(!editing||document.activeElement!==$('fx'))$('fx').value=String(wb.getRaw(cur,anchor.r,anchor.c));
+  $('nm').value=addrOf(sel);if(!editing)$('fx').value=String(wb.getRaw(cur,anchor.r,anchor.c));
   const st=styleOf(anchor.r,anchor.c)||{};$('fontSz').value=st.sz||11;$('fontName').value=st.font||'Calibri';$('nf').value=sh().fmt[key(anchor.r,anchor.c)]||'';
   const nums=[];for(let r=sel.r1;r<=sel.r2&&r<=ROWS;r++)for(let c=sel.c1;c<=sel.c2&&c<=COLS;c++){const v=wb.value(cur,r,c);if(typeof v==='number')nums.push(v);}
   $('stR').textContent=nums.length>1?`Sum: ${E.numStr(+nums.reduce((a,b)=>a+b,0).toPrecision(12))}  Avg: ${E.numStr(+(nums.reduce((a,b)=>a+b,0)/nums.length).toPrecision(8))}  Count: ${nums.length}`:'';
 }
 /* ---------- selection ---------- */
 let dragging=false;
-$('grid').addEventListener('pointerdown',e=>{const td=e.target.closest('td');if(!td||design)return;const r=+td.dataset.r,c=+td.dataset.c;commitIfEditing();
+$('grid').addEventListener('pointerdown',e=>{const td=e.target.closest('td');if(!td||design)return;const r=+td.dataset.r,c=+td.dataset.c;
+  if(editing&&canPoint()){e.preventDefault();const ext=(e.shiftKey||extendMode)&&pointRef;pointTo(r,c,!!ext);if(extendMode){extendMode=false;updRngBtn();}dragging=true;pointing=true;return;}
+  commitIfEditing();
   const prev=Object.assign({},sel);if(e.shiftKey||extendMode){sel={r1:Math.min(anchor.r,r),c1:Math.min(anchor.c,c),r2:Math.max(anchor.r,r),c2:Math.max(anchor.c,c)};}else{anchor={r,c};sel={r1:r,c1:c,r2:r,c2:c};}dragging=true;paintSel(prev);});
-$('grid').addEventListener('pointermove',e=>{if(!dragging||e.pointerType==='touch')return;const el=document.elementFromPoint(e.clientX,e.clientY);const td=el&&el.closest&&el.closest('td');if(!td)return;const r=+td.dataset.r,c=+td.dataset.c;const prev=Object.assign({},sel);sel={r1:Math.min(anchor.r,r),c1:Math.min(anchor.c,c),r2:Math.max(anchor.r,r),c2:Math.max(anchor.c,c)};paintSel(prev);});
-window.addEventListener('pointerup',()=>dragging=false);
-let extendMode=false;
+$('grid').addEventListener('pointermove',e=>{if(!dragging||e.pointerType==='touch')return;const el=document.elementFromPoint(e.clientX,e.clientY);const td=el&&el.closest&&el.closest('td');if(!td)return;const r=+td.dataset.r,c=+td.dataset.c;if(pointing){pointTo(r,c,true);return;}const prev=Object.assign({},sel);sel={r1:Math.min(anchor.r,r),c1:Math.min(anchor.c,c),r2:Math.max(anchor.r,r),c2:Math.max(anchor.c,c)};paintSel(prev);});
+window.addEventListener('pointerup',()=>{dragging=false;pointing=false;});
+let extendMode=false,pointing=false,pointRef=null,editCell=null;
 $('grid').addEventListener('dblclick',e=>{const td=e.target.closest('td');if(td){$('fx').focus();}});
-$('stL').onclick=()=>{extendMode=!extendMode;$('stL').textContent=extendMode?'Select range: ON (tap end cell)':'Ready';};
+$('stL').onclick=()=>toggleRange();
+function updRngBtn(){$('rngBtn').classList.toggle('on',extendMode);$('stL').textContent=extendMode?'Range mode: tap the LAST cell of the range':'Ready';}
+function toggleRange(){extendMode=!extendMode;updRngBtn();}
 function gotoName(t){t=t.trim().toUpperCase();const nm=book.names[t];if(nm)t=nm;const m=/^([A-Z]+)(\d+)(?::([A-Z]+)(\d+))?$/.exec(t);if(!m)return;const c1=E.colToNum(m[1]),r1=+m[2],c2=m[3]?E.colToNum(m[3]):c1,r2=m[4]?+m[4]:r1;const prev=sel;anchor={r:r1,c:c1};sel={r1:Math.min(r1,r2),c1:Math.min(c1,c2),r2:Math.max(r1,r2),c2:Math.max(c1,c2)};paintSel(prev);const td=tds[r1]&&tds[r1][c1];if(td)td.scrollIntoView({block:'center',inline:'center'});}
 /* ---------- editing ---------- */
-function fxKey(e){if(e.key==='Enter'){e.preventDefault();commitFx(true);}else if(e.key==='Escape'){editing=false;$('fx').blur();updateFx();}}
-function commitIfEditing(){if(editing&&document.activeElement===$('fx'))commitFx();editing=false;}
-function commitFx(move){setCell(cur,anchor.r,anchor.c,$('fx').value);editing=false;$('fx').blur();if(move){const prev=Object.assign({},sel);anchor={r:Math.min(ROWS,anchor.r+1),c:anchor.c};sel={r1:anchor.r,c1:anchor.c,r2:anchor.r,c2:anchor.c};paintSel(prev);}}
+function fxKey(e){if(e.key==='Enter'){e.preventDefault();commitFx(true);}else if(e.key==='Escape'){cancelEdit();}}
+function fxFocus(){if(!editing){editing=true;editCell={sheet:cur,r:anchor.r,c:anchor.c};pointRef=null;}guide();}
+function fxInput(){const f=$('fx');if(pointRef&&f.selectionStart!==pointRef.end)pointRef=null;guide();}
+function backToEditSheet(){if(editCell&&editCell.sheet!==cur&&wb.sheets[editCell.sheet]){cur=editCell.sheet;renderTabs();build();}}
+function cancelEdit(){editing=false;pointRef=null;$('fx').blur();backToEditSheet();extendMode=false;updRngBtn();hideGuide();updateFx();}
+function commitIfEditing(){if(editing)commitFx();editing=false;}
+function commitFx(move){if(!editing&&!editCell){return;}const ec=editCell||{sheet:cur,r:anchor.r,c:anchor.c};const v=$('fx').value;editing=false;pointRef=null;extendMode=false;updRngBtn();$('fx').blur();hideGuide();backToEditSheet();
+  const prev=Object.assign({},sel);anchor={r:ec.r,c:ec.c};sel={r1:ec.r,c1:ec.c,r2:ec.r,c2:ec.c};setCell(ec.sheet,ec.r,ec.c,v);
+  if(move){anchor={r:Math.min(ROWS,ec.r+1),c:ec.c};sel={r1:anchor.r,c1:anchor.c,r2:anchor.r,c2:anchor.c};}paintSel(prev);}
+/* ----- point mode: tap/drag cells while typing a formula ----- */
+function canPoint(){const f=$('fx'),v=f.value;if(v[0]!=='=')return false;const p=f.selectionStart==null?v.length:f.selectionStart;if(pointRef&&p===pointRef.end)return true;return /[=(,;+\-*\/^&<>:{ ]$/.test(v.slice(0,p));}
+function refText(r,c){return E.addr(r,c)}
+function sheetPrefix(){if(editCell&&cur!==editCell.sheet)return (/^\w+$/.test(cur)?cur:"'"+cur+"'")+'!';return '';}
+function pointTo(r,c,extend){const f=$('fx'),v=f.value;let start,end,fr,fc;
+  if(pointRef){start=pointRef.start;end=pointRef.end;}else{start=end=(f.selectionStart==null?v.length:f.selectionStart);}
+  if(extend&&pointRef){fr=pointRef.fr;fc=pointRef.fc;}else{fr=r;fc=c;pointRef=null;}
+  const pre=sheetPrefix();const a=Math.min(fr,r),b=Math.max(fr,r),c1=Math.min(fc,c),c2=Math.max(fc,c);
+  const txt=pre+(a===b&&c1===c2?refText(a,c1):refText(a,c1)+':'+refText(b,c2));
+  f.value=v.slice(0,start)+txt+v.slice(end);const pos=start+txt.length;pointRef={start,end:pos,fr,fc};
+  const prev=Object.assign({},sel);sel={r1:a,c1:c1,r2:b,c2:c2};paintSel(prev);
+  try{f.focus({preventScroll:true});f.setSelectionRange(pos,pos);}catch(e){}guide();}
+/* ----- function guide (argument hints + autocomplete) ----- */
+const SIG={SUM:'number1, [number2], ...',AVERAGE:'number1, [number2], ...',MIN:'number1, [number2], ...',MAX:'number1, [number2], ...',COUNT:'value1, [value2], ...',COUNTA:'value1, [value2], ...',COUNTBLANK:'range',PRODUCT:'number1, [number2], ...',
+ IF:'logical_test, value_if_true, [value_if_false]',IFS:'logical_test1, value_if_true1, ...',IFERROR:'value, value_if_error',IFNA:'value, value_if_na',SWITCH:'expression, value1, result1, ..., [default]',CHOOSE:'index_num, value1, [value2], ...',AND:'logical1, [logical2], ...',OR:'logical1, [logical2], ...',NOT:'logical',XOR:'logical1, [logical2], ...',LET:'name1, value1, ..., calculation',
+ VLOOKUP:'lookup_value, table_array, col_index_num, [range_lookup]',HLOOKUP:'lookup_value, table_array, row_index_num, [range_lookup]',XLOOKUP:'lookup_value, lookup_array, return_array, [if_not_found], [match_mode], [search_mode]',XMATCH:'lookup_value, lookup_array, [match_mode], [search_mode]',LOOKUP:'lookup_value, lookup_vector, [result_vector]',MATCH:'lookup_value, lookup_array, [match_type]',INDEX:'array, row_num, [column_num]',OFFSET:'reference, rows, cols, [height], [width]',INDIRECT:'ref_text',ROW:'[reference]',COLUMN:'[reference]',ROWS:'array',COLUMNS:'array',TRANSPOSE:'array',ADDRESS:'row_num, column_num, [abs_num], [a1], [sheet_text]',
+ SUMIF:'range, criteria, [sum_range]',SUMIFS:'sum_range, criteria_range1, criteria1, ...',COUNTIF:'range, criteria',COUNTIFS:'criteria_range1, criteria1, ...',AVERAGEIF:'range, criteria, [average_range]',AVERAGEIFS:'average_range, criteria_range1, criteria1, ...',MAXIFS:'max_range, criteria_range1, criteria1, ...',MINIFS:'min_range, criteria_range1, criteria1, ...',SUMPRODUCT:'array1, [array2], ...',
+ FILTER:'array, include, [if_empty]',SORT:'array, [sort_index], [sort_order], [by_col]',SORTBY:'array, by_array1, [sort_order1], ...',UNIQUE:'array, [by_col], [exactly_once]',SEQUENCE:'rows, [columns], [start], [step]',RANDARRAY:'[rows], [columns]',TAKE:'array, rows, [columns]',DROP:'array, rows, [columns]',VSTACK:'array1, [array2], ...',HSTACK:'array1, [array2], ...',TOCOL:'array',TOROW:'array',CHOOSECOLS:'array, col_num1, ...',CHOOSEROWS:'array, row_num1, ...',
+ LEFT:'text, [num_chars]',RIGHT:'text, [num_chars]',MID:'text, start_num, num_chars',LEN:'text',UPPER:'text',LOWER:'text',PROPER:'text',TRIM:'text',CONCAT:'text1, [text2], ...',CONCATENATE:'text1, [text2], ...',TEXTJOIN:'delimiter, ignore_empty, text1, ...',TEXT:'value, format_text',VALUE:'text',SUBSTITUTE:'text, old_text, new_text, [instance_num]',REPLACE:'old_text, start_num, num_chars, new_text',FIND:'find_text, within_text, [start_num]',SEARCH:'find_text, within_text, [start_num]',REPT:'text, number_times',EXACT:'text1, text2',TEXTBEFORE:'text, delimiter',TEXTAFTER:'text, delimiter',TEXTSPLIT:'text, col_delimiter, [row_delimiter]',
+ ROUND:'number, num_digits',ROUNDUP:'number, num_digits',ROUNDDOWN:'number, num_digits',INT:'number',MOD:'number, divisor',ABS:'number',SQRT:'number',POWER:'number, power',CEILING:'number, significance',FLOOR:'number, significance',MROUND:'number, multiple',LARGE:'array, k',SMALL:'array, k',RANK:'number, ref, [order]',MEDIAN:'number1, [number2], ...',MODE:'number1, [number2], ...',STDEV:'number1, [number2], ...',VAR:'number1, [number2], ...',PERCENTILE:'array, k',QUARTILE:'array, quart',CORREL:'array1, array2',SLOPE:'known_ys, known_xs',INTERCEPT:'known_ys, known_xs',FORECAST:'x, known_ys, known_xs',
+ DATE:'year, month, day',TODAY:'',NOW:'',YEAR:'serial_number',MONTH:'serial_number',DAY:'serial_number',WEEKDAY:'serial_number, [return_type]',EDATE:'start_date, months',EOMONTH:'start_date, months',DATEDIF:'start_date, end_date, unit ("Y","M","D")',NETWORKDAYS:'start_date, end_date, [holidays]',WORKDAY:'start_date, days, [holidays]',DATEVALUE:'date_text',DAYS:'end_date, start_date',
+ PMT:'rate, nper, pv, [fv], [type]',FV:'rate, nper, pmt, [pv], [type]',PV:'rate, nper, pmt, [fv], [type]',NPER:'rate, pmt, pv, [fv], [type]',RATE:'nper, pmt, pv, [fv], [type]',NPV:'rate, value1, [value2], ...',IRR:'values, [guess]',ISBLANK:'value',ISNUMBER:'value',ISTEXT:'value',ISERROR:'value',ISNA:'value',SUBTOTAL:'function_num, ref1, ...'};
+function fnNames(){return Object.keys(E.FN).concat(['IF','IFS','IFERROR','IFNA','SWITCH','CHOOSE','LET']).filter((v,i,a)=>a.indexOf(v)===i).sort();}
+function ctxAt(v,p){const st=[];let inStr=false,brace=0;for(let i=0;i<p;i++){const ch=v[i];if(ch==='"'){inStr=!inStr;continue;}if(inStr)continue;if(ch==='{')brace++;else if(ch==='}')brace--;else if(ch==='('){const m=/([A-Za-z][A-Za-z0-9.]*)$/.exec(v.slice(0,i));st.push({n:m?m[1].toUpperCase():'',a:0});}else if(ch===')')st.pop();else if((ch===','||ch===';')&&!brace&&st.length)st[st.length-1].a++;}return {top:st.reverse().find(x=>x.n),inStr};}
+function guide(){const g=$('fguide'),f=$('fx'),v=f.value;if(!editing&&document.activeElement!==f){hideGuide();return;}if(v[0]!=='='){hideGuide();return;}const p=f.selectionStart==null?v.length:f.selectionStart;const cx=ctxAt(v,p);let h='';
+  if(cx.top){const n=cx.top.n;const sig=SIG[n];if(sig!==undefined||E.FN[n]||['IF','IFS','IFERROR','IFNA','SWITCH','CHOOSE','LET'].includes(n)){const args=(sig||'...').split(', ').filter(Boolean);let idx=cx.top.a;const variadic=args.length&&args[args.length-1]==='...';if(variadic&&idx>=args.length-1)idx=args.length-1;else if(variadic===false&&idx>=args.length)idx=-1;
+    h+='<div class="sig"><b style="background:none;padding:0">'+n+'</b>(' +args.map((a,i)=>i===idx?'<b>'+esc2(a)+'</b>':'<u>'+esc2(a)+'</u>').join(', ')+')</div>';}}
+  const m=/([A-Za-z][A-Za-z0-9.]*)$/.exec(v.slice(0,p));
+  if(m&&!cx.inStr&&!/[A-Za-z0-9.]/.test(v[p]||'')&&!/[A-Za-z0-9_.$!']$/.test(v.slice(0,p-m[1].length))){const q=m[1].toUpperCase();const list=fnNames().filter(n=>n.startsWith(q)&&n!==q).slice(0,14);if(list.length)h+='<div>'+list.map(n=>`<span class="ch" onpointerdown="event.preventDefault();pickFn('${n}')">${n}</span>`).join('')+'</div>';}
+  if(h){g.innerHTML=h;g.style.display='block';}else hideGuide();}
+function esc2(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function hideGuide(){$('fguide').style.display='none';}
+function pickFn(n){const f=$('fx'),v=f.value,p=f.selectionStart;const m=/([A-Za-z][A-Za-z0-9.]*)$/.exec(v.slice(0,p));const st=p-m[1].length;f.value=v.slice(0,st)+n+'('+v.slice(p);const pos=st+n.length+1;pointRef=null;f.focus();f.setSelectionRange(pos,pos);guide();}
 function setCell(sheet,r,c,raw,silent){wb.setRaw(sheet,r,c,raw);if(!silent){save();if(sheet===cur){refresh();fireChange(sheet,r,c);}}else dirty=true;}
 function fireChange(sheet,r,c){const rt=getRT();if(rt&&rt.hasProc('Worksheet_Change')&&!rt._inChange){rt._inChange=true;try{rt.run('Worksheet_Change',[new VRange(sheet,r,c,r,c)]);}catch(e){}rt._inChange=false;}}
 /* ---------- formatting ---------- */
@@ -183,7 +228,7 @@ function dedupe(){const seen=new Set();let rm=0;for(let r=sel.r1;r<=sel.r2;r++){
 function findRep(){gen('Find & Replace',`<label>Find</label><input type="text" id="fF"><label>Replace with</label><input type="text" id="fR">`,[['Replace all',()=>{const f=$('fF').value,rp=$('fR').value;let n=0;for(const k in sh().cells){const x=sh().cells[k];const [r,c]=k.split(',').map(Number);const raw=wb.getRaw(cur,r,c);if(typeof raw==='string'&&f&&raw.includes(f)){wb.setRaw(cur,r,c,raw.split(f).join(rp));n++;}}save();refresh();closeGen();alert(n+' cell(s) changed.');}]]);}
 function fnPick(){const names=Object.keys(E.FN).sort();gen('Insert function',`<input type="text" id="fq" placeholder="Search ${names.length} functions" oninput="fnFilter()"><div id="fl" style="max-height:48vh;overflow:auto;margin-top:6px"></div>`,[]);fnFilter();}
 function fnFilter(){const q=$('fq').value.toUpperCase();$('fl').innerHTML=Object.keys(E.FN).sort().filter(n=>n.includes(q)).slice(0,120).map(n=>`<div style="padding:9px;border-bottom:1px solid #eee" onclick="closeGen();insertFn('${n}(')">${n}</div>`).join('');}
-function insertFn(t){const f=$('fx');if(!/^=/.test(f.value))f.value='=';f.value+=t;f.focus();editing=true;}
+function insertFn(t){const f=$('fx');if(!/^=/.test(f.value))f.value='=';f.value+=t;f.focus();f.setSelectionRange(f.value.length,f.value.length);guide();}
 function toggleShowF(){showF=!showF;refresh();}
 function doRecalc(m){refresh();}
 /* ---------- tabs / ribbons ---------- */
@@ -192,7 +237,7 @@ function renderTabs(){
   $('stabs').innerHTML=wb.order.map(n=>`<div class="${n===cur?'on':''}" onclick="gotoSheet('${n.replace(/'/g,"\\'")}')" ondblclick="renSheet('${n.replace(/'/g,"\\'")}')">${n}</div>`).join('')+'<div onclick="addSheet()" style="font-weight:700">+</div>';
 }
 function ribTab(t,el){document.querySelectorAll('#rtabs div').forEach(d=>d.classList.remove('on'));el.classList.add('on');document.querySelectorAll('.rib .tb').forEach(b=>b.classList.toggle('on',b.dataset.t===t));}
-function gotoSheet(n){commitIfEditing();cur=n;sel={r1:1,c1:1,r2:1,c2:1};anchor={r:1,c:1};renderTabs();build();}
+function gotoSheet(n){if(editing&&canPoint()){cur=n;renderTabs();build();try{$('fx').focus({preventScroll:true})}catch(e){}return;}commitIfEditing();cur=n;sel={r1:1,c1:1,r2:1,c2:1};anchor={r:1,c:1};renderTabs();build();}
 function addSheet(){let i=wb.order.length+1;while(wb.sheets['Sheet'+i])i++;wb.addSheet('Sheet'+i);save();gotoSheet('Sheet'+i);}
 function renSheet(n){RB.ask('Rename sheet',n,v=>{v=v.trim();if(!v||wb.sheets[v])return;const s=wb.sheets[n];s.name=v;wb.sheets[v]=s;delete wb.sheets[n];wb.order=wb.order.map(x=>x===n?v:x);if(book.shapes[n]){book.shapes[v]=book.shapes[n];delete book.shapes[n];}if(cur===n)cur=v;save();renderTabs();build();});}
 /* ---------- persistence / xlsx ---------- */
