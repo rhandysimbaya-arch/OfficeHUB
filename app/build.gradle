@@ -6,9 +6,22 @@ android {
         applicationId 'com.rb.officesuite'
         minSdk 24
         targetSdk 34
-        versionCode 1
-        versionName '1.0'
+        // Each CI build gets a higher versionCode so Android installs it as an UPDATE over the old one.
+        versionCode (System.getenv('GITHUB_RUN_NUMBER') ? System.getenv('GITHUB_RUN_NUMBER').toInteger() + 100 : 100)
+        versionName '1.' + (System.getenv('GITHUB_RUN_NUMBER') ?: '0')
     }
-    buildTypes { release { minifyEnabled false } }
+    // One fixed signing key for every build (same key = update in place, no uninstall needed).
+    signingConfigs {
+        hub {
+            storeFile file('officehub.keystore')
+            storePassword 'officehub123'
+            keyAlias 'officehub'
+            keyPassword 'officehub123'
+        }
+    }
+    buildTypes {
+        debug { signingConfig signingConfigs.hub }
+        release { minifyEnabled false; signingConfig signingConfigs.hub }
+    }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }

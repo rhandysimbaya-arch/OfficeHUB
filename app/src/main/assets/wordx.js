@@ -528,12 +528,12 @@ function wRibbon() {
     + GRP('Links', BIG('Link', '&#128279;', 'wLinkDlg()', 'Link (Ctrl+K)') + COLS(SM('&#128278; Bookmark', 'wBookmark()'), SM('&#8635; Cross-reference', 'wCrossRef()')))
     + GRP('Comments', BIG('Comment', '&#128172;', 'wCmtNew()', 'New Comment (Ctrl+Alt+M)'))
     + GRP('Header &amp; Footer', COLS(SMD('&#9636; Header', "(b=>wHFMenu(b,'hdr'))"), SMD('&#9636; Footer', "(b=>wHFMenu(b,'ftr'))"), SMD('# Page Number', 'wPgNumMenu')))
-    + GRP('Text', BIG('Text Box', '&#9634;', 'wTextBox()') + COLS(SMD('&#9776; Quick Parts', 'wQuickField'), SMD('<span style="color:#2f5496;font-weight:900">A</span> WordArt', 'wWordArt'), SM('A&#8628; Drop Cap', "wDropCap(!blocksInSel()[0]||!blocksInSel()[0].classList.contains('dropcap'))"), SM('&#128197; Date &amp; Time', 'wDateTime()')))
+    + GRP('Text', BIG('Text Box', '&#9634;', 'wTextBox()') + COLS(SMD('&#9776; Quick Parts', 'wQuickField'), SMD('<span style="color:#2f5496;font-weight:900">A</span> WordArt', 'wWordArt'), SM('A&#8628; Drop Cap', "wDropCap(!blocksInSel()[0]||!blocksInSel()[0].classList.contains('dropcap'))")) + COLS(SM('&#128197; Date &amp; Time', 'wDateTime()')))
     + GRP('Symbols', COLS(SM('&pi; Equation', 'wEquation()'), SM('&Omega; Symbol', 'insSym()')));
   T['Design'] = GRP('Document Formatting', BIGD('Themes', 'Aa', 'wThemeMenu') + BIGD('Style Set', '&#9776;', 'wSetMenu') + COLS(SMD('&#127912; Colors', 'wColorsMenu'), SMD('A Fonts', 'wFontsMenu'), SMD('&#8597; Paragraph Spacing', 'wParaSpMenu')) + BIG('Set as Default', '&#10003;', "alert('Current theme saved with this document.');save()"))
     + GRP('Page Background', BIGD('Watermark', '&#128167;', 'wWatermark') + `<label class="big" style="display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;height:66px;padding:0 6px"><i style="font-style:normal;font-size:22px">&#127912;</i>Page Color<input type="color" value="#ffffff" oninput="pageColor(this.value)" style="width:40px;height:16px"></label>` + BIG('Page Borders', '&#9634;', 'wPageBorderDlg()'));
   T['Layout'] = GRP('Page Setup', BIGD('Margins', '&#9707;', 'wMargins') + BIGD('Orientation', '&#9645;', 'wOrientMenu') + BIGD('Size', '&#128196;', 'wSizeMenu') + BIGD('Columns', '&#9707;', 'wColsMenu') + COLS(SMD('&#8615; Breaks', 'wBreaksMenu'), SMD('#&#8801; Line Numbers', 'wLineNums'), SM('a- Hyphenation', 'wHyph()', '', 'wHyBtn')), 'wPageSetupDlg()')
-    + GRP('Paragraph', `<div class="col" style="font-size:12px"><div class="r"><b style="width:56px">Indent</b>Left <input type="number" step="0.1" style="width:52px" onchange="wQuickPara('marginLeft',this.value+'in')" value="0">" Right <input type="number" step="0.1" style="width:52px" onchange="wQuickPara('marginRight',this.value+'in')" value="0">"</div><div class="r"><b style="width:56px">Spacing</b>Before <input type="number" style="width:52px" onchange="wQuickPara('marginTop',this.value+'pt')" value="0">pt After <input type="number" style="width:52px" onchange="wQuickPara('marginBottom',this.value+'pt')" value="8">pt</div></div>`, 'wParaDlg()')
+    + GRP('Paragraph', `<div class="pgrid"><b>Indent</b><span>Left</span><label class="pf"><input type="number" step="0.1" onchange="wQuickPara('marginLeft',this.value+'in')" value="0"><u>"</u></label><span>Right</span><label class="pf"><input type="number" step="0.1" onchange="wQuickPara('marginRight',this.value+'in')" value="0"><u>"</u></label><b>Spacing</b><span>Before</span><label class="pf"><input type="number" onchange="wQuickPara('marginTop',this.value+'pt')" value="0"><u>pt</u></label><span>After</span><label class="pf"><input type="number" onchange="wQuickPara('marginBottom',this.value+'pt')" value="8"><u>pt</u></label></div>`, 'wParaDlg()')
     + GRP('Arrange', BIGD('Position', '&#9635;', 'wPosMenu') + BIGD('Wrap Text', '&#8617;', 'wPosMenu') + COLS(SM('&#8679; Bring Forward', "WPIC&&(WPIC.style.position='relative',WPIC.style.zIndex=(+WPIC.style.zIndex||0)+1)"), SM('&#8681; Send Backward', "WPIC&&(WPIC.style.position='relative',WPIC.style.zIndex=(+WPIC.style.zIndex||0)-1)"), SM('&#10227; Rotate 90°', "WPIC&&(WPIC.style.transform='rotate('+(((parseInt((WPIC.style.transform||'').replace(/[^\\d-]/g,''))||0)+90)%360)+'deg)',wAfter())")));
   T['References'] = GRP('Table of Contents', BIGD('Table of Contents', '&#9776;', 'wTocMenu') + COLS(SMD('&#10133; Add Text', 'wAddText'), SM('&#8635; Update Table', 'wTocUpdate()')))
     + GRP('Footnotes', BIG('Insert Footnote', 'AB<sup>1</sup>', "wNote('fn')", 'Insert Footnote (Ctrl+Alt+F)') + COLS(SM('&#9638; Insert Endnote', "wNote('en')", 'Insert Endnote (Ctrl+Alt+D)'), SM('&#8615; Next Footnote', "(()=>{const L=[...WB().querySelectorAll('.fnref')];if(L.length)L[(L.findIndex(x=>x.getBoundingClientRect().top>120)+L.length)%L.length].scrollIntoView({block:'center'})})()"), SM('&#128065; Show Notes', "(WB().querySelector('.notes')||{scrollIntoView(){}}).scrollIntoView()")))
@@ -666,4 +666,27 @@ function hit(e){const P=WP();if(!P)return;const y=e.clientY,x=e.clientX;const h=
   if(on&&inR(b)){hfSet(false);WB().focus();return true}return false}
 $('desk').addEventListener('dblclick',e=>{if(hit(e))e.preventDefault()});
 $('desk').addEventListener('pointerup',e=>{if(e.pointerType!=='touch')return;const t=Date.now();if(t-last<420&&Math.abs(e.clientX-lx)<30&&Math.abs(e.clientY-ly)<30){last=0;hit(e)}else{last=t;lx=e.clientX;ly=e.clientY}});
+})();
+
+/* Keep the highlighted text selected (and the editor focused) after any formatting command. */
+(function () {
+  const HOST = '#body,#hdr,#ftr';
+  const hostOf = n => { const el = n && (n.nodeType === 1 ? n : n.parentElement); return el && el.closest(HOST); };
+  const offs = (r, host) => { const a = document.createRange(); a.selectNodeContents(host); a.setEnd(r.startContainer, r.startOffset); const s = a.toString().length; return [s, s + r.toString().length]; };
+  const at = (host, o) => { const w = document.createTreeWalker(host, NodeFilter.SHOW_TEXT); let n, c = 0, st, en, so, eo; while ((n = w.nextNode())) { const l = n.nodeValue.length; if (st == null && c + l >= o[0]) { st = n; so = o[0] - c; } if (c + l >= o[1]) { en = n; eo = o[1] - c; break; } c += l; } if (!st || !en) return null; const r = document.createRange(); r.setStart(st, so); r.setEnd(en, eo); return r; };
+  function keep(name) {
+    const f = window[name]; if (typeof f !== 'function' || f.__keep) return;
+    const w = function () {
+      let host = null, o = null;
+      try { restore(); const s = getSelection(); if (s.rangeCount && !s.isCollapsed) { const r = s.getRangeAt(0); host = hostOf(r.commonAncestorContainer); if (host) o = offs(r, host); } } catch (e) { }
+      const res = f.apply(this, arguments);
+      const fin = () => { try { if (!host || !o || !host.isConnected) return; const s = getSelection(); let r = null; if (s.rangeCount && !s.isCollapsed && host.contains(s.anchorNode)) r = s.getRangeAt(0).cloneRange(); else r = at(host, o); if (!r) return; if (document.activeElement !== host) host.focus({ preventScroll: true }); s.removeAllRanges(); s.addRange(r); lastSel = r.cloneRange(); } catch (e) { } };
+      if (res && typeof res.then === 'function') return res.then(x => { fin(); return x; });
+      fin(); return res;
+    };
+    w.__keep = 1; window[name] = w;
+  }
+  ['ex', 'para', 'fsz', 'fstep', 'applyStyle', 'chCase', 'wApplyFont', 'wApplyPara', 'wFx', 'wIndent', 'wBullet', 'wNumber', 'wQuickPara', 'wParaBorder', 'wClearAll'].forEach(keep);
+  // buttons must not steal focus from the editor (keeps the selection highlighted)
+  document.addEventListener('mousedown', e => { const t = e.target; if (t.closest && t.closest('.rib,.wmenu') && t.closest('button,.gl,.gi') && !t.closest('select,input,textarea')) e.preventDefault(); }, true);
 })();
