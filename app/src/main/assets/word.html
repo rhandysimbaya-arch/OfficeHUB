@@ -1,5 +1,5 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Word - Office HUB</title><link rel="stylesheet" href="common.css"><link rel="stylesheet" href="ribbon.css">
+<title>Word - Office HUB</title><link rel="stylesheet" href="common.css"><link rel="stylesheet" href="ribbon.css"><link rel="stylesheet" href="dlg.css">
 <style>
 html,body{overflow:hidden}body{display:flex;flex-direction:column;height:100%}
 .topbar{position:static}
@@ -54,8 +54,9 @@ function renderTabs(){const L=TABS.concat(document.body.classList.contains('hfed
 function tab(t){if(t==='File'){fileMenu();return;}curTab=t;if(t==='Header & Footer')hfSet(true);else if(document.body.classList.contains('hfedit'))hfSet(false);renderTabs();}
 /* keep selection when pressing ribbon buttons */
 document.querySelectorAll('.rib button').forEach(b=>b.addEventListener('mousedown',e=>e.preventDefault()));
-document.addEventListener('selectionchange',()=>{const s=getSelection();if(s.rangeCount&&($('body').contains(s.anchorNode)||$('hdr').contains(s.anchorNode)||$('ftr').contains(s.anchorNode)))lastSel=s.getRangeAt(0).cloneRange();});
-function restore(){if(lastSel){const s=getSelection();s.removeAllRanges();s.addRange(lastSel);}}
+document.addEventListener('selectionchange',()=>{const ae=document.activeElement;if(!ae||!ae.isContentEditable)return;const s=getSelection();if(s.rangeCount&&($('body').contains(s.anchorNode)||$('hdr').contains(s.anchorNode)||$('ftr').contains(s.anchorNode)))lastSel=s.getRangeAt(0).cloneRange();});
+document.addEventListener('pointerdown',e=>{if(e.target.closest&&e.target.closest('.rib,.wmenu,.modal,.wdlg')){const s=getSelection();if(s.rangeCount&&!s.isCollapsed&&($('body').contains(s.anchorNode)||$('hdr').contains(s.anchorNode)||$('ftr').contains(s.anchorNode)))lastSel=s.getRangeAt(0).cloneRange()}},true);
+function restore(){if(!lastSel)return;try{const n=lastSel.commonAncestorContainer,el=n.nodeType===1?n:n.parentElement,h=el&&el.closest('[contenteditable="true"]');if(h&&document.activeElement!==h){h.focus({preventScroll:true});}}catch(e){}const s=getSelection();s.removeAllRanges();s.addRange(lastSel);}
 function ex(c,v){restore();document.execCommand(c,false,v||null);upd();}
 function para(t){restore();document.execCommand('formatBlock',false,t==='p'?'<p>':'<'+t+'>');upd();}
 function fsz(px){restore();document.execCommand('fontSize',false,7);document.querySelectorAll('font[size="7"],span[style*="xxx-large"]').forEach(f=>{const sp=document.createElement('span');sp.style.fontSize=px+'pt';while(f.firstChild)sp.appendChild(f.firstChild);f.replaceWith(sp);});upd();}

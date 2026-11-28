@@ -1,6 +1,6 @@
 /* One-row ribbon: groups that do not fit collapse into "Label ▾" drop-downs (Excel + Word). */
 (function(){
-const PRI=['clipboard','styles','cells','editing','rules','font','paragraph','proofing','voice','sensitivity','show','window','macros'];
+const PRI=['rules','editing','styles','cells','clipboard','voice','sensitivity','show','window','macros','proofing','paragraph','font'];
 const css=document.createElement('style');css.textContent=`
 .rib .tb{flex-wrap:nowrap!important;max-height:none!important;overflow-x:auto!important;overflow-y:hidden!important;align-items:flex-start!important}
 .rib .tb .grp{flex:0 0 auto;border-bottom:0!important;min-width:0}
