@@ -388,7 +388,7 @@ pageColor = function (c) { WP().style.background = c; save(); };
 const WMARG = { Normal: [1, 1, 1, 1], Narrow: [0.5, 0.5, 0.5, 0.5], Moderate: [1, 0.75, 1, 0.75], Wide: [1, 2, 1, 2], Mirrored: [1, 1.25, 1, 1] };
 function wMargins(btn) { wMenu(btn, Object.entries(WMARG).map(([k, m]) => ({ t: `<b>${k}</b><br><small>Top ${m[0]}" Left ${m[1]}" Bottom ${m[2]}" Right ${m[3]}"</small>`, f: () => wSetMargins(m) })).concat(['-', { t: 'Custom Margins…', f: wPageSetupDlg }])); }
 function wSetMargins(m) { WD.marg = m; pgS.m = Math.round(m[1] * 1440); setPage(); wMargPaint(); save(); }
-function wMargPaint() { const m = WD.marg || [1, 1, 1, 1]; WP().style.setProperty('--mx', Math.round(m[1] * 96) + 'px'); WB().style.paddingRight = Math.round(m[3] * 96) + 'px'; WB().style.setProperty('padding-right', Math.round(m[3] * 96) + 'px', 'important'); $('hdr').style.paddingTop = Math.max(12, Math.round(m[0] * 96 - 60)) + 'px'; $('ftr').style.paddingBottom = Math.max(12, Math.round(m[2] * 96 - 60)) + 'px'; wRuler(); }
+function wMargPaint() { const m = WD.marg || [1, 1, 1, 1]; WP().style.setProperty('--mx', Math.round(m[1] * 96) + 'px'); WB().style.paddingRight = Math.round(m[3] * 96) + 'px'; WB().style.setProperty('padding-right', Math.round(m[3] * 96) + 'px', 'important'); const P = WP().style; P.setProperty('--hh', Math.round(m[0] * 96) + 'px'); P.setProperty('--hp', Math.round(m[0] * 48) + 'px'); P.setProperty('--fh', Math.round(m[2] * 96) + 'px'); P.setProperty('--fb', Math.round(m[2] * 48) + 'px'); P.setProperty('--fp', Math.max(0, Math.round(m[2] * 48 - 18)) + 'px'); WB().style.paddingTop = '0'; wRuler(); }
 const WSIZES = { letter: ['Letter', '8.5" x 11"'], legal: ['Legal', '8.5" x 14"'], a4: ['A4', '8.27" x 11.69"'], a5: ['A5', '5.83" x 8.27"'], exec: ['Executive', '7.25" x 10.5"'], folio: ['Folio / Long', '8.5" x 13"'], b5: ['B5 (JIS)', '7.17" x 10.12"'] };
 Object.assign(SZ, { a5: [8391, 11906], exec: [10440, 15120], folio: [12240, 18720], b5: [10319, 14571] });
 function wSizeMenu(btn) { wMenu(btn, Object.entries(WSIZES).map(([k, v]) => ({ t: `<b>${v[0]}</b><br><small>${v[1]}</small>`, on: pgS.sz === k, f: () => { setPage({ sz: k }); wRuler(); } })).concat(['-', { t: 'More Paper Sizes…', f: wPageSetupDlg }])); }
@@ -657,3 +657,13 @@ function wPicEdit(el) {
 PB.longPress(WB(), 'img,.wshape', el => wPicEdit(el));
 
 window.__exit={keys:['hub_word_doc','hub_word_x'],save:()=>saveDocx(),empty:()=>!WB().innerText.trim()&&!WB().querySelector('img,table,.wshape')};
+
+/* Header/footer: dimmed and locked like desktop Word; double-click (or double-tap) the area to edit it. */
+(function(){let last=0,lx=0,ly=0;
+function hit(e){const P=WP();if(!P)return;const y=e.clientY,x=e.clientX;const h=$('hdr').getBoundingClientRect(),f=$('ftr').getBoundingClientRect(),b=WB().getBoundingClientRect();const inR=(r)=>x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom;const on=document.body.classList.contains('hfedit');
+  if(inR(h)){if(!on||curTab!=='Header & Footer')hfSet(true);const t=$('hdr');t.focus();const r=document.createRange();r.selectNodeContents(t);r.collapse(false);const s=getSelection();s.removeAllRanges();s.addRange(r);return true}
+  if(inR(f)){if(!on)hfSet(true);const t=$('ftr');t.focus();const r=document.createRange();r.selectNodeContents(t);r.collapse(false);const s=getSelection();s.removeAllRanges();s.addRange(r);return true}
+  if(on&&inR(b)){hfSet(false);WB().focus();return true}return false}
+$('desk').addEventListener('dblclick',e=>{if(hit(e))e.preventDefault()});
+$('desk').addEventListener('pointerup',e=>{if(e.pointerType!=='touch')return;const t=Date.now();if(t-last<420&&Math.abs(e.clientX-lx)<30&&Math.abs(e.clientY-ly)<30){last=0;hit(e)}else{last=t;lx=e.clientX;ly=e.clientY}});
+})();

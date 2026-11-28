@@ -89,8 +89,4 @@ function fhGo() {
   box.innerHTML = res.map((o, i) => `<div style="border:1px solid #cfd8d2;border-radius:6px;padding:8px;margin:6px 0"><b>${esc(o.title)}</b>${o.f ? `<div style="font-family:monospace;background:#f3f6f4;padding:4px 6px;margin:4px 0;word-break:break-all">${esc(o.f)}</div>${o.v !== undefined ? `<div style="font-size:12px">Result now: <b>${esc(String(o.v))}</b></div>` : ''}` : ''}${o.note ? `<div style="font-size:12px;color:#555">${esc(o.note)}</div>` : ''}<div style="margin-top:4px">${o.f ? `<button data-i="${i}" data-a="ins">Insert in ${E.addr(anchor.r, anchor.c)}</button> <button data-i="${i}" data-a="cp">Copy</button>` : `<button data-i="${i}" data-a="run">Do it</button>`}</div></div>`).join('');
   box.querySelectorAll('button').forEach(b => b.onclick = () => { const o = res[+b.dataset.i]; if (b.dataset.a === 'ins') { wb.setRaw(cur, anchor.r, anchor.c, o.f); if (o.fmt) sh().fmt[key(anchor.r, anchor.c)] = o.fmt; save(); closeGen(); refresh(); stMsg('Formula inserted in ' + E.addr(anchor.r, anchor.c)); } else if (b.dataset.a === 'cp') { try { navigator.clipboard.writeText(o.f); b.textContent = 'Copied'; } catch (e) { b.textContent = 'Copy failed'; } } else { closeGen(); fhRun(o); stMsg('Done: ' + o.title); } });
 }
-(function () {
-  const rib = document.getElementById('rib'); if (!rib) return; const grp = (label, btns) => `<div class="grp"><div class="gb">${btns.map(b => `<button class="big" onclick="${b[1]}"><i>${b[2]}</i>${b[0]}</button>`).join('')}</div><div class="gl">${label}</div></div>`;
-  ['Home', 'Formulas'].forEach(tab => { const t = rib.querySelector(`[data-t="${tab}"]`); if (t) t.insertAdjacentHTML('beforeend', grp('Helper', [['Formula Helper', 'fhDlg()', '&#128161;']])); });
-})();
-window.addEventListener('keydown', e => { if (e.ctrlKey && e.shiftKey && (e.key === 'H' || e.key === 'h') && !editing && !editCell) { e.preventDefault(); e.stopImmediatePropagation(); fhDlg(); } }, true);
+
